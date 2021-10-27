@@ -1,18 +1,24 @@
 <template>
   <img alt="Vue logo" src="./assets/logo.png">
   <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <TambahBarang />
 </template>
 
 <script>
 import HelloWorld from './components/HelloWorld.vue'
+import TambahBarang from './components/TambahBarang.vue'
+import {app} from './Firebase'
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    HelloWorld,
+    TambahBarang
   }
 }
 </script>
+
+
 
 <style>
 #app {
