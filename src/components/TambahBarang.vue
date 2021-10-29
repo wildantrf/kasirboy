@@ -1,20 +1,26 @@
 <template>
-  <form>
+  <div class="home">
+   
+    <form>
+    <div style="display:flex;" ><label class="bold" style="margin:auto; justify-content:center; ">Input Produk</label></div><br>
     <label for="inputsku">SKU : </label>
     <input v-model="databarang.sku" type="text" class="inputsku"/>
     <label>Nama item : </label>
     <input v-model="databarang.namabarang" type="text" class="inputnama" />
     <label>Harga item : </label>
     <input v-model="databarang.hargabarang" type="text" class="inputharga" />
-    <button @click.prevent="tambah" class="input">Tambahkan item</button>
-    <button @click.prevent="ambil" class="input">Update item</button>
+    <button @click.prevent="tambah" class="input">Tambahkan produk</button>
+    
   </form>
+  </div>
 
   <div v-for="data in databarang2" :key="data.sku" style="border:solid;">
       <div>SKU : {{data.sku}}</div><br>
       <div>Nama Barang : {{data.namabarang}}</div><br>
       <div>Harga Barang : {{data.hargabarang}}</div><br>
   </div>
+
+
 
 </template>
 
@@ -32,7 +38,7 @@ export default {
         databarang2 : []   
         }
     },
-    methods : {
+methods : {
         async tambah(event) {
             event.preventDefault();
             const docRef = await doc(collection(db, "databarang")); 
@@ -65,6 +71,7 @@ export default {
 </script>
 
 <style scoped>
+
 form {
   max-width: 420px;
   margin: 30px auto;
@@ -72,13 +79,24 @@ form {
   text-align: left;
   padding: 40px;
   border-radius: 10px;
+  font-size: 15px;
+  max-width:300px;
+  
 }
 label {
   display: inline-block;
   margin: 15px 0 0px;
   letter-spacing: 1px;
-  font-weight: bold;
+
   text-transform: uppercase;
+}
+label.bold {
+  display: inline-block;
+  margin: 15px 0 0px;
+  letter-spacing: 1px;
+  font-weight:bold;
+  text-transform: uppercase;
+  font-size:20px;
 }
 input {
   display: block;
@@ -88,6 +106,7 @@ input {
   border: none;
   border-bottom: 2px solid #ddd;
   padding: 10px 6px;
+  font-size: 10px;
 }
 .inputbarang {
   text-align: left;
@@ -106,5 +125,6 @@ button {
   width: 80%;
   height: 50px;
   text-transform: uppercase;
+  font-size: 15px;
 }
 </style>
