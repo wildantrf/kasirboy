@@ -2,13 +2,20 @@
   <div class="home">
    
     <form>
-    <div style="display:flex;" ><label class="bold" style="margin:auto; justify-content:center; ">Input Produk</label></div><br>
+    <div style="display:flex;" ><label class="bold" style="margin:auto; justify-content:center; ">Tambah Produk</label></div><br>
+    <label class="fotoproduk">Foto Produk : </label>
+    <div id="inputfoto">
+      <input v-on:change="uploadfoto" type="file" class="inputfoto"/>
+    </div>
+    <div id="preview">
+      <img v-if="url" :src="url" />
+    </div>
     <label for="inputsku">SKU : </label>
-    <input v-model="databarang.sku" type="text" class="inputsku"/>
-    <label>Nama item : </label>
-    <input v-model="databarang.namabarang" type="text" class="inputnama" />
-    <label>Harga item : </label>
-    <input v-model="databarang.hargabarang" type="text" class="inputharga" />
+    <input v-model="databarang.sku" type="text" class="input"/>
+    <label>Nama produk : </label>
+    <input v-model="databarang.namabarang" type="text" class="input" />
+    <label>Harga produk : </label>
+    <input v-model="databarang.hargabarang" type="text" class="input" />
     <button @click.prevent="tambah" class="input">Tambahkan produk</button>
     
   </form>
@@ -35,10 +42,12 @@ export default {
     data() {
         return {
         databarang : {sku: '', namabarang: '', hargabarang: ''},
-        databarang2 : []   
+        databarang2 : [],
+        url : null  
         }
     },
 methods : {
+        
         async tambah(event) {
             event.preventDefault();
             const docRef = await doc(collection(db, "databarang")); 
@@ -65,8 +74,15 @@ methods : {
                                 });
                                 });
             this.databarang2 = _databarang2;  
+        },
+
+        uploadfoto(e) {
+      const fotoproduk = e.target.files[0];
+      this.url = URL.createObjectURL(fotoproduk);
         }
-    }
+}
+        
+    
 }
 </script>
 
@@ -84,12 +100,14 @@ form {
   
 }
 label {
-  display: inline-block;
+  display: block;
   margin: 15px 0 0px;
   letter-spacing: 1px;
 
   text-transform: uppercase;
 }
+
+
 label.bold {
   display: inline-block;
   margin: 15px 0 0px;
@@ -98,7 +116,11 @@ label.bold {
   text-transform: uppercase;
   font-size:20px;
 }
-input {
+
+input.input {
+  text-align: left;
+  margin: auto;
+
   display: block;
   width: 100%;
   box-sizing: border-box;
@@ -107,11 +129,6 @@ input {
   border-bottom: 2px solid #ddd;
   padding: 10px 6px;
   font-size: 10px;
-}
-.inputbarang {
-  text-align: left;
-  margin: auto;
-  display: flex;
 }
 
 button {
@@ -126,5 +143,23 @@ button {
   height: 50px;
   text-transform: uppercase;
   font-size: 15px;
+}
+#preview {
+  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#preview img {
+  max-width: 100%;
+  max-height: 100px;
+}
+
+#inputfoto{
+  padding:10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>
