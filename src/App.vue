@@ -1,10 +1,13 @@
 <template>
-    <h1>Ampere Coffee</h1>
-
+    <h1>Kasirboy</h1>
+    <transition name="fade">
     <div v-show="kasirs"><ListBarang /></div>
-    <div v-show="tambahdatas"><TambahBarang ref="TambahBarang" /></div>
+     </transition> 
+     <transition name="fade">
+    <div v-show="tambahdatas"><TambahBarang /></div>
+     </transition> 
     <Navbar @TambaB="tambahdata" @kasirS="kasir" />
-  
+   
  
 </template>
 
@@ -56,4 +59,10 @@ export default {
 body {
   margin:0;
 }
+
+.fade-enter, .fade-leave {
+  transition: opacity 1s;
+
+}
+
 </style>

@@ -4,7 +4,9 @@
   <div class="home">
     
     <div v-for="data in databarang2" :key="data.sku" class="container-fluidz">
-      <div class="thumbnail">disini gambar</div>
+      <div class="thumbnail">
+        <img src='../assets/thumbnail.jpeg'>
+      </div>
       <div class="tengah">
         <div class="namabarang">{{data.namabarang}}</div>
         <div class="hargabarang">Rp {{data.hargabarang}}</div>
@@ -129,8 +131,18 @@ body {
   display: flex;
   height: 100%;
   width: 80px;
-  border-radius: 5px;
+  border-radius: 5px 0px 0px 5px;
+  overflow:hidden;
+  align-content: center;
 }
+
+.thumbnail img {
+  height: 100%;
+  margin:auto;
+  align-content: center;
+  
+}
+
 
 .kanan {
   display: flex;

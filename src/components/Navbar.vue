@@ -1,9 +1,7 @@
 <template>
   <div class="navbarb">
     <div class="navbarcontainer">
-      <div @click.prevent="TambahBarang" class="navbarbutton">
-        <a href="">Input Produk</a>
-      </div>
+     
       <div @click.prevent="Kasir" class="navbarbutton">
       <a href="">Kasir</a>
       </div>
@@ -11,7 +9,10 @@
       <a href="">Pesanan</a>
       </div>
       <div class="navbarbutton">
-      <a href="">Selesai</a>
+      <a href="">Pesanan Selesai</a>
+      </div>
+       <div @click.prevent="TambahBarang" class="navbarbutton">
+        <a href="">Manajemen Produk</a>
       </div>
     </div>
   </div>
