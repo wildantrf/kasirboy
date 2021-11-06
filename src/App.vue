@@ -1,9 +1,9 @@
 <template>
     <h1>Kasirboy</h1>
-    <transition name="fade">
+    <transition name="slide-fade">
     <div v-show="kasirs"><ListBarang /></div>
      </transition> 
-     <transition name="fade">
+     <transition name="slide-fade">
     <div v-show="tambahdatas"><TambahBarang /></div>
      </transition> 
     <Navbar @TambaB="tambahdata" @kasirS="kasir" />
@@ -60,9 +60,14 @@ body {
   margin:0;
 }
 
-.fade-enter, .fade-leave {
-  transition: opacity 1s;
+.slide-fade-enter-active {
+  transition: all 1s ease;
+}
 
+.slide-fade-enter, .slide-fade-leave-to
+/* .slide-fade-leave-active below version 2.1.8 */ {
+  transform: translateX(1000px);
+  opacity: 10;
 }
 
 </style>

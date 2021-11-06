@@ -6,10 +6,10 @@
       <a href="">Kasir</a>
       </div>
       <div class="navbarbutton">
-      <a href="">Pesanan</a>
+      <a >Pesanan</a>
       </div>
       <div class="navbarbutton">
-      <a href="">Pesanan Selesai</a>
+      <a >Pesanan Selesai</a>
       </div>
        <div @click.prevent="TambahBarang" class="navbarbutton">
         <a href="">Manajemen Produk</a>
