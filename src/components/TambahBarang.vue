@@ -4,8 +4,8 @@
     <form>
     <div style="display:flex;" ><label class="bold" style="margin:auto; justify-content:center; ">Tambah Produk</label></div><br>
     <label class="fotoproduk">Foto Produk : </label>
-    <div id="inputfoto">
-      <input v-on:change="uploadfoto" type="file" class="inputfoto"/>
+    <div class="inputfoto">
+      <input v-on:change="uploadfoto" type="file" id="inputfoto"/>
     </div>
     <div id="preview">
       <img v-if="url" :src="url" />
@@ -32,9 +32,10 @@
 </template>
 
 <script>
-import { db } from '../Firebase.js'
+import { db, storage } from '../Firebase.js'
 
-import { collection, doc, setDoc, getDocs } from "firebase/firestore"; 
+import { collection, doc, setDoc, getDocs } from "firebase/firestore";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 
 
@@ -43,7 +44,9 @@ export default {
         return {
         databarang : {sku: '', namabarang: '', hargabarang: ''},
         databarang2 : [],
-        url : null  
+        url : null,
+        fotoproduk : ''
+      
         }
     },
 methods : {
@@ -58,6 +61,42 @@ methods : {
                         };
             setDoc(docRef, data);
             console.log(this.databarang.sku);
+
+              //ambil file
+              const file = document.getElementById('inputfoto').files[0];
+              const metadata = file.type;
+              const storage = getStorage();
+              const storageRef = ref(storage, 'fotoproduk/' + file.name);
+
+        // upload file
+        const uploadsk = uploadBytesResumable(storageRef, file, metadata);
+        
+     
+          uploadsk.on('stated', 
+          
+          (snapshot) => { 
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              console.log('Upload is ' + progress + '% done');
+                      switch (snapshot.state) {
+                        case 'paused':
+                          console.log('Upload is paused');
+                          break;
+                        case 'running':
+                          console.log('Upload is running');
+                          break;
+                      }
+            }, 
+            erro => {
+              // Handle unsuccessful uploads
+            }, 
+            success => {
+              getDownloadURL(uploadsk.snapshot.ref).then((downloadURL) => {
+                console.log('File available at', downloadURL);
+              });
+            }
+          );
+          
+
         },
     
         async ambil() {
@@ -77,8 +116,11 @@ methods : {
         },
 
         uploadfoto(e) {
-      const fotoproduk = e.target.files[0];
-      this.url = URL.createObjectURL(fotoproduk);
+      const _fotoproduk = document.getElementById('inputfoto').files[0];
+      this.url = URL.createObjectURL(_fotoproduk);
+      this.fotoproduk = _fotoproduk
+
+              
         }
 }
         
@@ -156,7 +198,7 @@ button {
   max-height: 100px;
 }
 
-#inputfoto{
+.inputfoto{
   padding:10px;
   display: flex;
   justify-content: center;
