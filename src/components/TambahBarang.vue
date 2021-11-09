@@ -1,21 +1,21 @@
 <template>
   <div class="home">
    
-    <form>
+    <form id="formtambahproduk">
     <div style="display:flex;" ><label class="bold" style="margin:auto; justify-content:center; ">Tambah Produk</label></div><br>
     <label class="fotoproduk">Foto Produk : </label>
     <div class="inputfoto">
-      <input v-on:change="uploadfoto" type="file" id="inputfoto"/>
+    <input v-on:change="fototerpilih" type="file" id="inputfoto"/>
     </div>
     <div id="preview">
       <img v-if="url" :src="url" />
     </div>
     <label for="inputsku">SKU : </label>
-    <input v-model="databarang.sku" type="text" class="input"/>
+    <input ref="sku" type="text" class="input"/>
     <label>Nama produk : </label>
-    <input v-model="databarang.namabarang" type="text" class="input" />
+    <input ref="namabarang" type="text" class="input" />
     <label>Harga produk : </label>
-    <input v-model="databarang.hargabarang" type="text" class="input" />
+    <input ref="hargabarang" type="text" class="input" />
     <button @click.prevent="tambah" class="input">Tambahkan produk</button>
     
   </form>
@@ -42,37 +42,40 @@ import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/
 export default {
     data() {
         return {
-        databarang : {sku: '', namabarang: '', hargabarang: ''},
+        databarang : {sku: '', urlfoto: '', namabarang: '', hargabarang: ''},
         databarang2 : [],
         url : null,
         fotoproduk : ''
-      
         }
     },
 methods : {
         
-        async tambah(event) {
-            event.preventDefault();
-            const docRef = await doc(collection(db, "databarang")); 
-            const data = {
-                        sku: this.databarang.sku,
-                        namabarang: this.databarang.namabarang,
-                        hargabarang: this.databarang.hargabarang
-                        };
-            setDoc(docRef, data);
-            console.log(this.databarang.sku);
-
+        tambah() {
+         
               //ambil file
-              const file = document.getElementById('inputfoto').files[0];
+            const file = document.getElementById('inputfoto').files[0];
+            this.databarang.sku = this.$refs["sku"].value
+            this.databarang.namabarang = this.$refs["namabarang"].value
+            this.databarang.hargabarang = this.$refs["hargabarang"].value
+                             
+          
+            if ( document.getElementById("inputfoto").files.length == 0 )
+            {
+                const docRef = doc(collection(db, "databarang")) 
+                const data =  this.databarang        
+                setDoc(docRef, data)
+                document.getElementById('formtambahproduk').reset();
+            }
+
+            else {
               const metadata = file.type;
               const storage = getStorage();
               const storageRef = ref(storage, 'fotoproduk/' + file.name);
-
-        // upload file
-        const uploadsk = uploadBytesResumable(storageRef, file, metadata);
+              // upload file
+              const uploadsk = uploadBytesResumable(storageRef, file, metadata);
         
      
-          uploadsk.on('stated', 
+           uploadsk.on('stated', 
           
           (snapshot) => { 
               const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
@@ -89,13 +92,32 @@ methods : {
             erro => {
               // Handle unsuccessful uploads
             }, 
-            success => {
-              getDownloadURL(uploadsk.snapshot.ref).then((downloadURL) => {
+            success  => {
+               getDownloadURL(uploadsk.snapshot.ref).then((downloadURL) => {
                 console.log('File available at', downloadURL);
-              });
-            }
-          );
+                this.databarang.urlfoto = downloadURL;
+                
+                const docRef = doc(collection(db, "databarang")); 
+                const data = this.databarang
+                setDoc(docRef, data)})  
+                }) 
           
+                document.getElementById('inputfoto').value = null,
+                this.url=''
+                this.$refs["sku"].value = null
+                this.$refs["namabarang"].value = null
+                this.$refs["hargabarang"].value = null
+                                
+                    
+                 
+    
+            
+
+    } 
+             
+              
+           
+    
 
         },
     
@@ -115,7 +137,7 @@ methods : {
             this.databarang2 = _databarang2;  
         },
 
-        uploadfoto(e) {
+        fototerpilih(e) {
       const _fotoproduk = document.getElementById('inputfoto').files[0];
       this.url = URL.createObjectURL(_fotoproduk);
       this.fotoproduk = _fotoproduk

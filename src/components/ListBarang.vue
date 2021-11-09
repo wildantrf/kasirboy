@@ -5,7 +5,7 @@
     
     <div v-for="data in databarang2" :key="data.sku" class="container-fluidz">
       <div class="thumbnail">
-        <img src='../assets/thumbnail.jpeg'>
+        <img :src=data.url>
       </div>
       <div class="tengah">
         <div class="namabarang">{{data.namabarang}}</div>
@@ -63,7 +63,8 @@ methods : {
             console.log(this.databarang2);
             
             _databarang2.push({ 
-                                sku:doc.data().sku, 
+                                sku:doc.data().sku,
+                                url:doc.data().urlfoto,
                                 namabarang:doc.data().namabarang,
                                 hargabarang:doc.data().hargabarang
                                 });
@@ -137,7 +138,9 @@ body {
 }
 
 .thumbnail img {
-  height: 100%;
+  min-height: 100%;
+  min-width:100%;
+  
   margin:auto;
   align-content: center;
   
