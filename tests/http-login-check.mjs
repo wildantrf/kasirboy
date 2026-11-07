@@ -7,5 +7,6 @@ const cookie=login.headers.getSetCookie().map(c=>c.split(';')[0]).join('; ');
 const session=await(await fetch(base+'/api/sim',{headers:{Cookie:cookie}})).json();assert.deepEqual(session.actor,{cafe:'senja',role:'owner'});
 assert.equal((await post({op:'logout'},cookie)).status,200);
 assert.equal((await(await fetch(base+'/api/sim',{headers:{Cookie:cookie}})).json()).actor,null);
+const home=await(await fetch(base)).text();assert(home.includes('Owner login'));assert(home.includes('Log in as owner'));assert(!home.includes('SIMULATION WORKSPACE'));
 for(const route of ['/','/workspace','/order/senja/7'])assert.equal((await fetch(base+route)).status,200);
 console.log('Owner login, invalid credentials, logout revocation, home/workspace/customer routes passed.');
