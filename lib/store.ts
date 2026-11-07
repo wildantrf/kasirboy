@@ -19,6 +19,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS menu (id TEXT PRIMARY KEY, cafe TEXT NOT NULL REFERENCES cafes(id), name TEXT NOT NULL, category TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER NOT NULL CHECK(stock>=0), paused INTEGER NOT NULL DEFAULT 0, art TEXT NOT NULL, description TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, cafe TEXT NOT NULL REFERENCES cafes(id), customer TEXT NOT NULL, number INTEGER NOT NULL, table_no INTEGER NOT NULL, items TEXT NOT NULL, total INTEGER NOT NULL, payment TEXT NOT NULL, progress TEXT NOT NULL, held INTEGER NOT NULL, expires INTEGER NOT NULL, created INTEGER NOT NULL, checkout_key TEXT NOT NULL, UNIQUE(cafe,customer,checkout_key), UNIQUE(cafe,number));
       CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, cafe TEXT NOT NULL REFERENCES cafes(id), role TEXT NOT NULL, expires INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS team (id TEXT PRIMARY KEY, cafe TEXT NOT NULL REFERENCES cafes(id), name TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('cashier','kitchen')), active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1)));
       CREATE TABLE IF NOT EXISTS audit (id TEXT PRIMARY KEY, cafe TEXT NOT NULL, action TEXT NOT NULL, role TEXT NOT NULL, created INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS refunds (order_id TEXT PRIMARY KEY REFERENCES orders(id), cafe TEXT NOT NULL, status TEXT NOT NULL, requested_by TEXT NOT NULL);
     `);
@@ -52,6 +53,28 @@ export class Store {
   login(cafe: string, role: Role) { this.cafe(cafe); if(!['owner','cashier','kitchen'].includes(role)) throw new Fault('Choose a demo role.'); const token=id(); this.db.prepare('INSERT INTO sessions VALUES(?,?,?,?)').run(token,cafe,role,Date.now()+86400000); return token; }
   session(token: string): Actor | null { const r=this.db.prepare('SELECT * FROM sessions WHERE id=? AND expires>?').get(token,Date.now()) as any; return r ? {cafe:r.cafe,role:r.role}:null; }
   logout(token:string) { this.db.prepare('DELETE FROM sessions WHERE id=?').run(token); }
+  team(actor:Actor) { this.allow(actor,['owner']); return this.db.prepare('SELECT id,name,role,active FROM team WHERE cafe=? ORDER BY name,id').all(actor.cafe); }
+  saveStaff(actor:Actor, staffId:unknown, name:unknown, role:unknown, active:unknown) { return this.tx(()=>{
+    this.allow(actor,['owner']);
+    if(typeof name!=='string'||!name.trim()||name.trim().length>80) throw new Fault('Enter a staff name between 1 and 80 characters.');
+    if(role!=='cashier'&&role!=='kitchen') throw new Fault('Choose Cashier or Kitchen.');
+    if(typeof active!=='boolean') throw new Fault('Choose an active status.');
+    const memberId=staffId===undefined?id():staffId;
+    if(typeof memberId!=='string') throw new Fault('Invalid staff member.');
+    if(staffId!==undefined) {
+      const result=this.db.prepare('UPDATE team SET name=?,role=?,active=? WHERE id=? AND cafe=?').run(name.trim(),role,active?1:0,memberId,actor.cafe);
+      if(!result.changes) throw new Fault('Staff member not found.',404);
+    } else this.db.prepare('INSERT INTO team VALUES(?,?,?,?,?)').run(memberId,actor.cafe,name.trim(),role,active?1:0);
+    this.audit(actor,`Staff ${staffId===undefined?'added':'updated'}: ${name.trim()}`);
+    return {id:memberId};
+  }); }
+  deleteStaff(actor:Actor, staffId:string) { return this.tx(()=>{
+    this.allow(actor,['owner']);
+    const member=this.db.prepare('SELECT name FROM team WHERE id=? AND cafe=?').get(staffId,actor.cafe);
+    if(!member) throw new Fault('Staff member not found.',404);
+    this.db.prepare('DELETE FROM team WHERE id=? AND cafe=?').run(staffId,actor.cafe);
+    this.audit(actor,`Staff removed: ${member.name}`);
+  }); }
   menu(cafe: string) { this.cafe(cafe); return this.db.prepare(`SELECT m.*, COALESCE((SELECT SUM(CAST(json_extract(j.value,'$.qty') AS INTEGER)) FROM orders o,json_each(o.items) j WHERE o.cafe=m.cafe AND o.held=1 AND json_extract(j.value,'$.id')=m.id),0) AS reserved FROM menu m WHERE cafe=?`).all(cafe).map((m:any)=>({...m,available:m.stock-m.reserved})); }
   rawOrder(cafe:string,order:string) { const r=this.db.prepare('SELECT * FROM orders WHERE cafe=? AND id=?').get(cafe,order) as any; if(!r) throw new Fault('Order not found.',404); return r; }
   shape(r:any, kitchen=false) { const fallback=r.progress==='Ready'||r.progress==='Served'?'Ready':r.progress==='Preparing'?'Preparing':'New'; const items=JSON.parse(r.items).map((line:any)=>{const {prep,...item}=line;return kitchen?{...item,prep:prep||fallback}:item;}); return {...r, items, customer:undefined,checkout_key:undefined}; }
@@ -83,7 +106,7 @@ export class Store {
   staff(actor:Actor) {
     this.allow(actor,['owner','cashier','kitchen']); this.sweep();
     const orders=(this.db.prepare(`SELECT * FROM orders WHERE cafe=? AND payment='paid' ORDER BY created ${actor.role==='kitchen'?'ASC':'DESC'}`).all(actor.cafe) as any[]).filter(o=>actor.role!=='kitchen'||o.progress!=='Needs review').map(o=>this.shape(o,actor.role==='kitchen'));
-    return {cafe:this.cafe(actor.cafe),role:actor.role,orders, menu:actor.role==='kitchen'?[]:this.menu(actor.cafe),refunds:actor.role==='kitchen'?[]:this.db.prepare('SELECT * FROM refunds WHERE cafe=?').all(actor.cafe),audit:actor.role==='kitchen'?[]:this.db.prepare('SELECT action,role,created FROM audit WHERE cafe=? ORDER BY created DESC LIMIT 15').all(actor.cafe)};
+    return {cafe:this.cafe(actor.cafe),role:actor.role,orders,team:actor.role==='owner'?this.team(actor):[], menu:actor.role==='kitchen'?[]:this.menu(actor.cafe),refunds:actor.role==='kitchen'?[]:this.db.prepare('SELECT * FROM refunds WHERE cafe=?').all(actor.cafe),audit:actor.role==='kitchen'?[]:this.db.prepare('SELECT action,role,created FROM audit WHERE cafe=? ORDER BY created DESC LIMIT 15').all(actor.cafe)};
   }
   advance(actor:Actor,oid:string,target:string) { return this.tx(()=>{
     this.allow(actor,target==='Served'?['owner','cashier','kitchen']:['owner','kitchen']); const o=this.rawOrder(actor.cafe,oid);
