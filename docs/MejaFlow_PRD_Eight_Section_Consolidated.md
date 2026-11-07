@@ -1,10 +1,8 @@
-# MejaFlow Product Requirements Document
+# MejaFlow — Product Requirements Document (PRD)
 
-**Edition:** Eight-section consolidation, review draft · **Date:** 8 November 2026
+**Revisi:** Outline dan gaya penulisan sesuai referensi · **Tanggal:** 8 November 2026
 
-**Authority:** Approved PRD v1.1 with A1–A8; original blueprint retained as proposals. Missing REVISED-file content is explicitly qualified in Section 1.2.
-
-**Scope of this delivery:** Documentation only. No application code changes or production activation.
+**Baseline:** PRD v1.1 yang disetujui, Q1–Q75 dan A1–A8. **Status:** Draft dokumentasi untuk ditinjau.
 
 1. [Overview](#1-overview)
 2. [Requirements](#2-requirements)
@@ -16,6 +14,35 @@
 8. [Deployment](#8-deployment)
 
 ## 1. Overview
+
+MejaFlow adalah aplikasi Point of Sale (POS) berbasis web untuk restoran dan kafe kecil hingga menengah di Indonesia. Aplikasi ini menghubungkan pencatatan pesanan, pembayaran, persiapan makanan, pelayanan meja, pengambilan takeaway, rekonsiliasi kas, dan laporan penjualan dalam satu sistem. Setiap bisnis memiliki ruang kerja dan data yang terpisah.
+
+Masalah utama yang ingin diselesaikan adalah informasi pesanan yang terlewat antara kasir, dapur, dan pelayan; ketidakjelasan apakah pesanan sudah dibayar; serta sulitnya mencocokkan penjualan dengan uang kas. MejaFlow menjaga agar setiap pesanan memiliki nomor, rincian produk, pembayaran, status persiapan, dan riwayat penyelesaian yang dapat ditelusuri.
+
+Tujuan utama aplikasi ini adalah membantu staf memproses transaksi dengan mudah dan memberikan informasi operasional yang konsisten kepada pemilik usaha. Pesanan hanya diteruskan ke dapur setelah pembayaran penuh dikonfirmasi. Kasir dan pelayan dapat mengikuti progres pesanan, sementara pemilik dapat memeriksa penjualan, selisih kas, dan tindakan pengecualian melalui catatan yang dapat diaudit.
+
+### Pengguna dan ruang lingkup
+
+| Pengguna | Kebutuhan utama |
+|---|---|
+| Pemilik bisnis | Mendaftarkan bisnis, mengelola paket, menu, staf, pengaturan, laporan, dan persetujuan pengecualian |
+| Manajer | Mengawasi operasional, menyetujui pengecualian/refund, dan meninjau rekonsiliasi |
+| Kasir | Membuat transaksi, mengonfirmasi pembayaran tunai, menerbitkan struk, menutup sesi kas, dan menyerahkan takeaway |
+| Pelayan | Membuat pesanan dine-in sesuai izin dan mencatat item yang sudah disajikan |
+| Staf dapur | Menerima pesanan lunas, memulai persiapan, mengatur prioritas sesuai izin, dan menandai item siap |
+| Pelanggan | Membayar pesanan, menerima struk/makanan, dan menyebutkan nomor pesanan untuk takeaway; akun pelanggan tidak diwajibkan |
+| Administrator platform | Mengelola konfigurasi paket dan operasional SaaS melalui akses istimewa yang dibatasi dan diaudit |
+
+MVP beroperasi secara online melalui browser, dengan target perangkat kasir komputer Windows dan tablet Android. MVP mencakup menu, transaksi tunai dan Dynamic QRIS yang memenuhi syarat, struk, sesi kas, meja, satu antrean dapur, penyajian, takeaway, pengecualian terkontrol, serta dashboard penjualan dasar. Inventori otomatis, resep/HPP, CRM/loyalitas, multi-outlet, dan operasional offline berada di luar MVP.
+
+**Status dokumen:** Acuan bisnis tetap PRD v1.1 yang telah disetujui, termasuk keputusan arsitektur A1–A8. AI untuk membaca foto menu cetak dan desain premium Emerald merupakan usulan. Keduanya belum otomatis masuk MVP atau paket langganan tertentu. Rincian yang belum disepakati tetap ditandai TBD.
+
+**Catatan sumber:** File blueprint REVISED yang disebut pada chat sebelumnya belum tersedia. Materi AI tambahan direkonstruksi dari ringkasan chat dan ditandai sebagai usulan, bukan diklaim sebagai salinan lengkap file tersebut. Isi utama ditulis dalam bahasa Indonesia mengikuti contoh; rincian teknis berbahasa Inggris dari konsolidasi sebelumnya dipertahankan pada bagian yang dapat dibuka di setiap bab. Nomor rujukan rinci seperti 2.3 dan ID persyaratan tetap mengacu ke rincian tersebut.
+
+Keberhasilan produk akan diukur melalui penyelesaian onboarding, transaksi pertama, ketepatan pengiriman pesanan ke dapur, rekonsiliasi pembayaran, waktu penyelesaian pesanan, penutupan sesi kas, dan aktivasi langganan. Target angka belum ditentukan. Sistem cloud tetap memerlukan backup dan pengujian pemulihan; dokumen ini tidak menjanjikan data mustahil hilang.
+
+<details>
+<summary>Rincian referensi: visi, sumber, metrik, dan pemetaan dokumen</summary>
 
 ### 1.1 Executive Summary
 
@@ -115,7 +142,45 @@ The underlying five reference images were not re-inspected in this task. This de
 
 All FR, NFR, AC, INV, TBD, WF, Q and CHG identifiers retain their meanings. Section references and heading numbers are updated for this outline. Blueprint sections are distributed as follows: 1/13/15 → Overview; 2/6/12/14 → Requirements; 3/5 → Core Features; 4 → User Flow; 9/10 → Architecture; 8 → Database Schema; 7 → Tech Stack and Deployment; 11 → Deployment. The corrected details below explicitly supersede conflicting proposal wording.
 
+</details>
+
 ## 2. Requirements
+
+### Kebutuhan penggunaan dan operasional
+
+- **Kemudahan Penggunaan (Usability):** Antarmuka harus jelas bagi staf dengan pengalaman teknologi yang beragam. Informasi menu, total pembayaran, nomor pesanan, status, dan tindakan berikutnya harus mudah ditemukan. Sediakan status memuat, kosong, gagal, terputus, dan akses ditolak; target aksesibilitas akhir tetap TBD.
+- **Pencatatan Cepat:** Kasir dapat mencari atau memilih produk, menentukan jumlah, varian/modifier, dan catatan, lalu meninjau total sebelum membayar. Jumlah klik dan target waktu transaksi belum ditetapkan; keduanya perlu divalidasi melalui uji pengguna.
+- **Pembayaran Sebelum Dapur:** Setiap pesanan normal harus dibayar penuh melalui satu metode, yaitu tunai atau Dynamic QRIS terverifikasi. Tidak ada split bill, gabungan metode, atau pembayaran sebagian dalam checkout normal. Sistem mencegah transaksi dan tiket dapur ganda ketika permintaan diulang.
+- **Tidak Ada Draft Pesanan Belum Bayar:** Keranjang biasa harus langsung dibayar atau dibuang. Percobaan QRIS yang sudah dimulai harus disimpan untuk pemulihan dan rekonsiliasi; catatan ini bukan fitur simpan draft umum.
+- **Ketersediaan Menu Manual:** Staf mengubah produk menjadi Available atau Sold Out. Produk Sold Out tidak dapat ditambahkan ke keranjang baru. Pengurangan stok otomatis, bahan baku, resep, dan peringatan stok rendah bukan kebutuhan MVP.
+- **Operasional Online:** Checkout dan perubahan operasional memerlukan koneksi. Gangguan koneksi harus menghasilkan status yang jujur dan pemulihan yang aman; aplikasi tidak boleh mengarang konfirmasi pembayaran.
+
+### Paket, trial, dan aktivasi merchant
+
+- **Free:** Rp0 tanpa batas waktu, tanpa trial dan tanpa metode pembayaran SaaS berulang. Mendukung kasir takeaway tunai dan fungsi Free yang berhak digunakan. Tidak mendukung pemesanan meja atau QRIS, walaupun merchant sudah terverifikasi. Batas staf/transaksi dan cakupan KDS Free masih TBD.
+- **Professional dan Business:** Paket berbayar bulanan atau tahunan. Harga IDR masing-masing periode diatur administrator platform; nominal, batas staf, dan matriks fitur lengkap masih TBD. Volume transaksi selesai pada paket berbayar tidak dibatasi, dengan pengendalian penyalahgunaan yang wajar.
+- **Trial 30 Hari:** Dimulai saat pendaftaran Professional/Business, dengan otorisasi metode penagihan berulang yang memenuhi syarat dan persetujuan eksplisit. Trial membuka fitur Business yang sudah diimplementasikan, tetapi tetap tunduk pada aktivasi merchant dan QRIS. Penundaan onboarding merchant tidak menghentikan atau memperpanjang trial.
+- **Tunai Tetap Tersedia:** Free dan akun berbayar dengan akses trial/aktif/grace yang sah dapat menjalankan takeaway tunai meskipun onboarding Midtrans belum dimulai, tertunda, atau ditolak. Trial berbayar tetap mendapat KDS takeaway sesuai hak trial. Jika KDS penuh tidak diberikan pada Free, alur pemenuhan takeaway yang sesuai tetap harus tersedia.
+- **Gerbang Meja dan QRIS Terpisah:** Pesanan meja memerlukan paket berbayar yang berhak dan onboarding merchant yang terverifikasi. QRIS memerlukan tambahan aktivasi kanal QRIS produksi. Akun sandbox, ID merchant yang diketik sendiri, atau formulir yang baru dikirim bukan bukti aktivasi.
+- **Grace dan Pembatalan:** Kegagalan tagihan berbayar memulai grace tujuh hari. Jika tidak pulih, akun menjadi read-only. Pembatalan menghentikan perpanjangan berikutnya, tetapi akses berbayar bertahan sampai paid-through date, lalu read-only. Tidak ada perpindahan otomatis ke Free. Jendela pemulihan/akses data 30 hari setelah berakhir terpisah dari kewajiban retensi hukum.
+- **Penagihan SaaS Terpisah:** Pembayaran langganan MejaFlow tidak sama dengan pembayaran pelanggan restoran. Penyedia/instrumen recurring billing serta kontrak, verifikasi, biaya, settlement, dan refund QRIS yang benar-benar didukung masih memerlukan konfirmasi. MejaFlow tidak boleh menampung seluruh dana penjualan restoran untuk diteruskan secara manual.
+
+### Integritas, izin, dan keamanan
+
+- **Pemisahan Bisnis:** Setiap pembacaan, perubahan, laporan, dan event diperiksa berdasarkan bisnis, keanggotaan, peran, hak paket, serta kepemilikan data. Menyembunyikan tombol saja tidak cukup.
+- **Perhitungan di Server:** Server menentukan harga, varian/modifier, diskon yang berlaku, pajak, service charge, dan total. Aturan pembulatan, dasar pajak, urutan perhitungan, serta definisi penjualan gross/net yang belum disepakati tetap TBD. Riwayat transaksi menyimpan snapshot nilai saat transaksi.
+- **Persetujuan Pengecualian:** Hanya manajer/pemilik yang menyetujui pengecualian dan refund, melalui PIN pribadi atau dashboard terautentikasi. Persetujuan harus eksplisit, diverifikasi server, dan diaudit. Self-approval manajer/pemilik diperbolehkan dengan autentikasi ulang dan catatan.
+- **Riwayat Tidak Ditimpa:** Transaksi lunas, pembayaran, koreksi, refund, dan penutupan kas harus dapat ditelusuri. Persetujuan refund tidak berarti dana telah dikembalikan; keberhasilan finansial memerlukan bukti hasil yang sesuai.
+- **Keamanan dan Pemulihan:** Lindungi kredensial, rahasiakan API key di backend, batasi percobaan autentikasi/PIN, minimalkan data pribadi, serta sediakan log, backup, dan uji pemulihan. Target uptime, latensi, kapasitas, RPO/RTO, dan retensi belum ditetapkan.
+
+### Kriteria penerimaan dan keputusan terbuka
+
+Pengujian harus mencakup Free tanpa mandat pembayaran; trial dengan merchant pending; merchant terverifikasi tetapi QRIS belum aktif; percobaan bypass UI/API; pembayaran ganda dan callback terlambat; pemulihan QRIS pending; pesanan independen pada satu meja; status item dapur/penyajian; hold dan persetujuan pengecualian; nomor takeaway yang salah; selisih kas; serta kebocoran antar-bisnis. Seluruh AC-001–AC-050 dan ID FR/NFR/INV dari v1.1 tetap berlaku.
+
+Register TBD-01–TBD-23 tetap dipertahankan lengkap pada rincian. Kelompok keputusan terbuka meliputi harga dan batas paket; hak KDS Free; gateway recurring; kontrak/verifikasi merchant; expiry/refund/biaya QRIS; printer; perhitungan pajak dan laporan; privasi/retensi; target operasional; perpindahan meja; gangguan pembayaran; pergerakan kas tambahan; serta perpindahan paket berbayar ke Free. Arsitektur A1–A8 sudah dipilih; validasi operasionalnya tetap terbuka.
+
+<details>
+<summary>Rincian referensi: persyaratan, izin, paket, kriteria penerimaan, keputusan, dan TBD</summary>
 
 ### 2.1 Document Conventions, Scope and Definitions
 
@@ -589,7 +654,43 @@ R01–R12 are supplementary blueprint identifiers, not replacements for approved
 
 Additional proposed-feature decisions: AI provider/model, supported image formats and size/count limits, retention/deletion, consent wording, spend budgets, rate limits, retry policy, evaluation thresholds, publication permissions, duplicate-match policy and commercial entitlements remain TBD. Emerald tokens/components require design review and accessibility validation; they do not become a plan named Emerald.
 
+</details>
+
 ## 3. Core Features
+
+### Fitur MVP yang telah dikonfirmasi
+
+- **Pengaturan Bisnis:** Pemilik mengatur profil bisnis/outlet utama, informasi struk, mata uang IDR, serta pajak dan service charge dengan penerapan dine-in/takeaway yang terpisah.
+- **Akun dan Hak Akses:** Peran dasar pemilik, manajer, kasir, pelayan, dan dapur diterapkan server. Administrator platform memiliki ruang lingkup tersendiri. Batas akun mengikuti paket; custom RBAC lanjutan bukan MVP.
+- **Manajemen Menu:** Kategori, produk, harga, gambar opsional, varian, modifier, pencarian, dan status Available/Sold Out. Perubahan katalog tidak mengubah isi struk atau pesanan lama.
+- **POS dan Pembayaran:** Keranjang berisi jumlah, catatan, dan rincian biaya yang ditinjau sebelum checkout. Tunai memerlukan konfirmasi kasir; QRIS memerlukan status provider yang diverifikasi server. QRIS pending dapat dipulihkan tanpa membuat pesanan atau tagihan ganda.
+- **Struk:** Struk pelanggan memuat nomor pesanan, rincian produk, biaya, metode pembayaran, dan identitas bisnis. Mendukung tampilan/unduhan/PDF serta layout thermal 58 mm dan 80 mm melalui jalur printer yang sudah diuji. Kegagalan cetak tidak membatalkan pembayaran.
+- **Sesi Kasir:** Kasir memasukkan saldo kas awal dan hitungan fisik akhir. Sistem menghitung expected cash dan selisih, memisahkan QRIS dari uang laci. Setiap selisih nonnol wajib diberi alasan; penutupan tidak memerlukan persetujuan manajer.
+- **Meja dan Pesanan Independen:** Satu meja dapat memiliki beberapa pesanan dengan nomor, pembayaran, struk, dan progres terpisah. Tidak ada tagihan bersama atau split bill. Meja terisi ketika pesanan dibuat dan tersedia kembali setelah semua pesanan aktif terkait selesai.
+- **Kitchen Display System (KDS):** Satu antrean bersama berisi pesanan lunas yang berhak masuk KDS. Tiket dimulai sebagai New; staf memilih Start Preparing, lalu menandai item atau Mark All as Ready. Urutan standar FIFO berdasarkan konfirmasi pembayaran/dispatch; prioritas manual hanya untuk peran yang diizinkan. Pesanan baru memberi indikator visual dan suara jika browser mengizinkan.
+- **Penyajian Dine-in:** Pelayan menandai item Served satu per satu atau Mark All as Served. Ready dari dapur belum berarti pesanan selesai. Meja dapat terlihat Available saat tamu masih duduk setelah semua makanan tersaji; ini konsekuensi aturan v1.1 yang sudah diterima.
+- **Takeaway:** Semua item harus siap sebelum masuk Ready for Pickup. Kasir/pelayan mencocokkan nomor pesanan yang disebut pelanggan dan menekan Mark as Handed Over. Nama opsional hanya untuk tampilan; nomor salah atau hilang memblokir penyerahan, tanpa jalur pemulihan atau override manajer pada MVP.
+- **Pengecualian Pesanan Lunas:** Staf dapat meminta reversal atau replacement dengan alasan; item belum disajikan yang terdampak masuk On Hold. Manajer/pemilik menyetujui atau menolak. Penolakan memulihkan status semula. Pengganti lebih mahal menunggu pembayaran tambahan terverifikasi sebelum menjadi item dapur yang dapat dikerjakan. Selisih lebih murah mengikuti refund yang disetujui dan hasilnya diverifikasi.
+- **Dashboard Dasar:** Penjualan harian/bulanan, jumlah transaksi, rincian tunai/QRIS, produk terlaris, dan filter tanggal dengan akses sesuai peran dan bisnis.
+
+### Cakupan pengembangan lanjutan
+
+Enam fase dan 16 modul asli tetap dipertahankan. Fondasi, menu/POS/sesi kas, meja/pesanan/KDS, serta pengecualian termasuk inti MVP; bagian dasar dashboard, QRIS pelanggan, penagihan SaaS, dan struk telah dipercepat ke MVP sesuai keputusan yang disetujui. Inventori otomatis dan resep/HPP tetap Fase 3; CRM/loyalitas dan pengelolaan staf lanjutan Fase 4; multi-outlet, integrasi tambahan, serta optimasi lain Fase 5. Eksplorasi offline memerlukan keputusan baru.
+
+### AI pembacaan menu cetak — usulan
+
+Pemilik/staf berizin dapat mengunggah satu atau beberapa foto menu cetak. AI mengusulkan nama produk, harga, kategori, serta opsi yang memang terbaca. Hasil masuk sebagai draft dengan sumber gambar dan indikator ketidakpastian. Pengguna meninjau foto dan draft secara berdampingan, memperbaiki nilai, menyelesaikan duplikasi, lalu secara eksplisit menerbitkan hasil yang valid.
+
+AI tidak boleh menerbitkan otomatis, menebak harga yang tidak terbaca, menimpa produk lama tanpa keputusan pengguna, atau mengubah pembayaran. Sistem memerlukan pemisahan tenant, validasi JSON, penyimpanan gambar privat, audit, publikasi yang aman saat diulang, kontrol biaya, dan penanganan foto buram/kegagalan provider. Provider/model, format dan ukuran foto, kuota, biaya, retensi, hak paket, dan batas kualitas masih TBD.
+
+### Premium Emerald UI — usulan
+
+Referensi visual digunakan untuk membentuk identitas MejaFlow yang orisinal: latar ivory/putih, navigasi dan aksi hijau tua, aksen emas terbatas, kartu ringkas, tabel terbaca, serta kontrol POS/KDS yang nyaman disentuh. Elemen merek, teks, dan aset milik produk referensi tidak disalin.
+
+Komponen yang diusulkan meliputi AppShell, Sidebar, Topbar, kartu KPI, tabel/filter, keranjang, dialog pembayaran, tiket dapur, status badge, penjelasan fitur terkunci, dan riwayat audit. Tampilan harus mempertahankan semua kontrol operasional yang diwajibkan v1.1. Emerald bukan nama paket baru; token warna, pilihan komponen, dan target aksesibilitas perlu ditinjau sebelum implementasi.
+
+<details>
+<summary>Rincian referensi: modul, prioritas, UI, dan usulan AI</summary>
 
 ### 3.1 Functional Requirements by Original Roadmap Module
 
@@ -832,7 +933,55 @@ Every operational screen needs loading, empty, error, permission-denied, saving,
 
 Proposed acceptance checks: multiple photos; blurry/skewed/low-light images; Indonesian price separators; ambiguous/missing prices; duplicate items across photos; modifiers; malicious text embedded in photos; unsupported files; provider failure/timeout; cancelled jobs; refresh/retry; concurrent publication; cross-tenant job/image access; budget exhaustion; mobile upload and review. Imported image text is untrusted data and cannot instruct the backend to change permissions, call tools or reveal secrets. Numeric quality thresholds and evaluation dataset remain TBD.
 
+</details>
+
 ## 4. User Flow
+
+### Pendaftaran dan pemilihan paket
+
+1. Pemilik mengisi akun dan informasi bisnis, lalu memilih Free atau Professional/Business bulanan/tahunan.
+2. Free membuat ruang kerja tanpa mandat pembayaran berulang. Paket berbayar menampilkan harga aktual, trial 30 hari, tanggal potensi tagihan pertama, perpanjangan otomatis, serta persetujuan metode berulang yang memenuhi syarat.
+3. Sistem membuat ruang kerja terisolasi. Trial berbayar dimulai pada waktu pendaftaran; menu, staf, pengaturan, dan takeaway tunai dapat disiapkan/dijalankan sesuai hak akses.
+4. Onboarding Midtrans dilakukan terpisah. Meja tetap terkunci sampai merchant terverifikasi; QRIS tetap terkunci sampai merchant dan kanal QRIS produksi aktif. Trial terus berjalan.
+5. Setelah trial, tagihan terverifikasi mengaktifkan paket terpilih. Kegagalan mengikuti grace tujuh hari, lalu read-only jika tidak pulih. Pembatalan tetap menghormati masa akses yang sudah dibayar.
+
+### Transaksi takeaway tunai
+
+1. Kasir membuka sesi dan memasukkan kas awal, memilih takeaway, menambahkan produk yang tersedia, jumlah, opsi, dan catatan.
+2. Server menghitung total; kasir meninjau dan mengonfirmasi penerimaan pembayaran penuh.
+3. Server mencatat pesanan/pembayaran dan menerbitkan satu dispatch KDS jika berhak. Struk dapat dicetak atau diunduh. Alur pemenuhan Free tetap tersedia sesuai keputusan hak KDS Free.
+4. Dapur memilih Start Preparing dan menandai item siap. Setelah semuanya Ready, pesanan masuk Ready for Pickup dengan notifikasi visual satu kali.
+5. Pelanggan menyebutkan nomor yang benar; kasir/pelayan mencocokkan dan menekan Mark as Handed Over. Pesanan selesai dan keluar dari antrean aktif.
+
+### Transaksi QRIS
+
+1. Server memeriksa hak paket berbayar, merchant terverifikasi, dan kanal produksi aktif.
+2. Sistem membuat percobaan QRIS dengan referensi, nominal, dan expiry aktual provider, lalu menyimpan status Pending. Belum ada tiket dapur.
+3. Server menerima/memeriksa bukti provider yang tepercaya, mencocokkan merchant, pesanan, nominal, mata uang, dan referensi sesuai kontrak integrasi.
+4. Setelah lunas terverifikasi, sistem mencatat status finansial dan mengirim ke dapur satu kali. Tampilan QR, redirect, atau klaim dari browser tidak cukup sebagai bukti lunas.
+5. Jika koneksi terputus, kasir memulihkan percobaan tersimpan. Retry atau fallback tunai hanya dilakukan setelah percobaan sebelumnya dipastikan aman; callback terlambat yang berkonflik masuk rekonsiliasi.
+
+### Dine-in dan penyajian
+
+1. Staf berizin pada bisnis berbayar dengan merchant terverifikasi memilih meja dan membuat pesanan independen.
+2. Setiap pesanan dibayar penuh secara terpisah sebelum masuk KDS. Pembelian tambahan di meja yang sama membuat pesanan baru, bukan menambah tagihan bersama.
+3. Dapur menerima dan menandai kesiapan per item/bulk. Pelayan menandai penyajian per item/bulk.
+4. Pesanan selesai setelah semua item yang berlaku Served. Meja baru tersedia kembali ketika tidak ada pesanan aktif terkait.
+
+### Pengecualian dan penggantian
+
+Staf mengajukan permintaan dengan item dan alasan → item belum Served yang terdampak masuk On Hold → manajer/pemilik mendapat antrean dan notifikasi visual satu kali → persetujuan/penolakan dilakukan eksplisit dengan autentikasi → penolakan mengembalikan status sebelumnya; persetujuan membuat koreksi terkait tanpa menimpa transaksi asli → selisih lebih mahal dibayar sebelum pengganti masuk dapur; selisih lebih murah mengikuti refund yang hasilnya dicatat secara jujur.
+
+Permintaan tetap menunggu keputusan manual. Tidak ada timeout, penolakan otomatis, pengingat berulang, atau eskalasi otomatis. Item lain dapat terus diproses. Refund yang baru disetujui tetap dibedakan dari refund yang benar-benar selesai.
+
+### Penutupan kas dan alur AI
+
+**Penutupan kas:** Kasir memasukkan uang fisik akhir → sistem membandingkan dengan expected cash, tanpa memasukkan QRIS → selisih nonnol mewajibkan alasan → kasir menutup sesi tanpa persetujuan manajer → ringkasan dikunci dan tersedia untuk peninjauan. Rumus selisih adalah actual dikurangi expected; cakupan cash-in/paid-out/cash drop tambahan masih TBD.
+
+**AI menu, jika disetujui:** Unggah foto → ekstraksi ke draft → tinjau berdampingan → koreksi harga/nama/opsi → putuskan duplikasi → tinjau ringkasan → konfirmasi publish → server memvalidasi izin, versi draft, dan idempotensi → tampilkan hasil serta audit. Mengulang publish tidak boleh membuat produk ganda.
+
+<details>
+<summary>Rincian referensi: workflow, status, serta invariant</summary>
 
 ### 4.1 Detailed Cross-Module Workflows
 
@@ -990,7 +1139,38 @@ Authorised merchant opens Menu Import → reads usage/privacy disclosure → upl
 
 Leaving the screen or retrying the request must recover the job, not create duplicate chargeable work. Editing after review invalidates prior approval of changed values. Extraction does not create live products, orders, payments or stock movements. Partial-publish versus atomic-batch semantics are a technical/product TBD; the UI must truthfully report the chosen outcome.
 
+</details>
+
 ## 5. Architecture
+
+MejaFlow mengikuti arsitektur A1–A8 yang telah disetujui. Frontend React/Vite mengakses API Hono di Cloudflare Workers. Neon platform pusat menyimpan identitas, registry tenant, dan langganan SaaS; setiap restoran memiliki project/database PostgreSQL Neon tersendiri untuk data bisnisnya. D1 bukan database aplikasi yang berwenang.
+
+### Komponen dan tanggung jawab
+
+- **Frontend:** Menampilkan POS, meja, KDS, laporan, pengaturan, dan status fitur dari server. Tidak menyimpan secret provider dan tidak menentukan sendiri status lunas atau kelayakan merchant.
+- **API dan Kebijakan Akses:** Memeriksa sesi, keanggotaan bisnis, peran, paket/trial/grace/read-only, hak fitur, status merchant, status QRIS, serta kepemilikan setiap resource.
+- **Database Platform:** Menangani identitas, registry koneksi tenant, katalog paket/harga, hak akses, langganan, mandat/tagihan SaaS dan proses provisioning sesuai rancangan rinci.
+- **Database Restoran:** Menangani menu, pesanan, item, pembayaran, sesi kas, pengecualian, audit, dan transactional outbox. Registry diselesaikan dari keanggotaan terverifikasi, bukan connection string yang dipilih browser.
+- **Event dan Realtime:** Transaksi database menyimpan perubahan dan outbox bersama. Cloudflare Queues dan Durable Objects WebSockets menyampaikan pembaruan; consumer mencegah efek ganda. Setelah reconnect, perangkat mengambil snapshot yang berwenang dan menyelaraskan status.
+- **Pembayaran Pelanggan:** Adapter provider membuat percobaan QRIS dan memverifikasi notifikasi/status server. Kelengkapan kontrak/API Midtrans serta merchant/payment-method yang didukung masih perlu dibuktikan.
+- **Langganan SaaS:** Cloudflare Cron mengatur jadwal renewal milik MejaFlow; gateway tokenised recurring yang disetujui menagih sesuai mandat, lalu hasil direkonsiliasi secara idempoten. Pemilihan gateway/instrumen masih TBD.
+
+Provisioning database restoran harus aman saat diulang dan hanya menandai tenant siap setelah migrasi berhasil. Tidak diasumsikan ada satu transaksi PostgreSQL yang melintasi project Neon terpisah; kegagalan sebagian memerlukan proses pemulihan dan rekonsiliasi yang jelas.
+
+### Integritas dan API
+
+Dalam database restoran, status pembayaran terverifikasi, jurnal finansial, dan event dispatch dicatat secara atomik. Pengulangan callback, klik, dan pengiriman antrean tidak boleh menggandakan pembayaran, tiket dapur, atau perubahan status. Riwayat tetap dapat direkonsiliasi walaupun QRIS baru dinonaktifkan.
+
+Batas domain API meliputi pendaftaran, menu, checkout, QRIS pending/recovery, struk, KDS, prioritas, penyajian, handover, pengecualian, sesi kas, langganan, dan laporan. Nama route/OpenAPI dalam rincian merupakan rancangan, bukan kontrak final. Route pembatalan tidak boleh memberi jalan untuk menghapus pesanan lunas secara biasa.
+
+### Arsitektur AI — usulan
+
+Browser mengunggah foto melalui akses terotorisasi ke penyimpanan privat → backend membuat job → adapter vision/OCR memproses → hasil divalidasi dengan skema JSON → draft disimpan → pengguna meninjau → server memublikasikan hasil yang valid. API key tetap pada backend; teks dalam gambar diperlakukan sebagai data yang tidak tepercaya, bukan instruksi sistem.
+
+Job memerlukan batas biaya/kuota, retry terbatas, pencatatan provider/model/versi, sumber gambar, error, dan perubahan reviewer. Penyimpanan objek, model, batas runtime, kebijakan retensi, dan semantik publikasi atomik/sebagian masih TBD. Usulan ini harus cocok dengan A1–A8 dan tidak otomatis mengganti backend menjadi Node/NestJS/Redis.
+
+<details>
+<summary>Rincian referensi: arsitektur, integrasi, API, dan panduan implementasi</summary>
 
 ### 5.1 Stage 2 Architecture Baseline A1–A8 (confirmed, retained in v1.1)
 
@@ -1147,7 +1327,41 @@ tests/                 # End-to-end and contract tests
 
 **Authority clarification:** These are retained planning instructions for a future authorised implementation. This task changes documentation only. React/Vite, Hono/Workers, Drizzle/Neon and A1–A8 control over any earlier Next.js/Node project-layout suggestion. The apps/packages tree above is optional packaging, not an approved monorepo requirement. Repository audit and a reviewed implementation plan should precede a future UI/AI build. AI or premium styling approval is not inferred from documentation inclusion.
 
+</details>
+
 ## 6. Database Schema
+
+Skema berikut adalah model logis untuk mendukung aturan produk. Teknologi dan pemisahan database mengikuti A1–A2; nama tabel, kolom, indeks fisik, dan migrasi masih merupakan rancangan implementasi. Referensi antar-project berupa ID logis dan tidak diasumsikan memiliki foreign key lintas database.
+
+| Kelompok data | Entitas utama | Fungsi dan batasan |
+|---|---|---|
+| Identitas/platform | users, businesses/tenant registry, business_memberships | Identitas, keanggotaan, peran, dan pemetaan tenant; lokasi fisik rinci mengikuti desain autentikasi/provisioning |
+| Paket/langganan | plans, plan_prices, plan_entitlements, subscriptions, subscription_payments | Free Rp0 tanpa recurring; paid trial/aktif/grace/read-only, harga bulanan/tahunan, mandat dan hasil penagihan |
+| Merchant/channel | merchant_onboarding, merchant_payment_channels | Bukti verifikasi merchant dan aktivasi QRIS produksi yang terpisah dari langganan; kepemilikan pusat/cache operasional perlu dirancang jelas |
+| Konfigurasi restoran | outlet_profiles, business_settings, tax_service_rules | Profil outlet utama, struk, aturan biaya dengan versi dan penerapan tipe pesanan |
+| Katalog | products/categories, product_variants_modifiers | Produk, kategori, harga, opsi, dan ketersediaan manual |
+| Meja/pesanan | areas, tables, orders, order_items | Pesanan independen, nomor unik, snapshot harga/biaya, status persiapan dan penyajian item |
+| Pembayaran/struk | payments, payment_attempts, receipts | Satu pembayaran normal penuh, pemulihan percobaan QRIS, referensi provider, hasil verifikasi dan snapshot struk |
+| Dapur/event | kds_dispatches, kds_item_events, order_priority_events | Dispatch unik, progres/hold item, prioritas dengan actor dan waktu |
+| Pengecualian | exceptions, exception_items, adjustments, refunds | Permintaan/persetujuan, status sebelum hold, reversal/replacement terkait, hasil refund terpisah dari approval |
+| Kas | cashier_sessions, cash_drawer_events | Saldo awal, expected/actual, selisih, alasan, metode pembayaran, dan koreksi tercatat |
+| Audit/notifikasi | audit_events, notifications, notification_deliveries, outbox_events, processed_events | Jejak tindakan, notifikasi satu kali, pengiriman yang dapat diulang tanpa efek ganda |
+| Fitur masa depan | ingredients, inventory_movements, recipes, recipe_lines, customers, loyalty_ledger, promotions | Belum menjadi tabel wajib MVP; perlu keputusan dan desain fase terkait |
+| AI, usulan | menu_import_jobs, menu_import_images, menu_import_draft_items, menu_import_duplicate_candidates, menu_import_publications, menu_import_audit_events | Draft privat, sumber/ketidakpastian, koreksi, duplikasi, versi dan hasil publish yang aman saat diulang |
+
+### Aturan penyimpanan
+
+- **Uang:** Gunakan representasi integer sesuai mata uang/gateway dan kebijakan presisi yang disepakati; hindari floating point biner untuk perhitungan uang.
+- **Waktu:** Simpan waktu sebagai UTC yang tidak ambigu; tampilkan dan laporkan sesuai zona waktu bisnis. Default zona waktu dan batas hari laporan masih TBD.
+- **Snapshot:** Simpan nama/harga produk, modifier, diskon, tarif/penerapan biaya, dan nilai struk pada transaksi. Perubahan menu/pengaturan tidak menulis ulang transaksi lama.
+- **Isolasi dan Keunikan:** Query dan relasi harus tenant-safe. Terapkan keunikan nomor pesanan, kunci idempotensi, event provider, dan dispatch sesuai scope yang dirancang. Kebijakan sequence/indeks tepat masih perlu ditetapkan.
+- **Transaksi dan Audit:** Pembayaran dan jurnal/outbox terkait harus konsisten. Koreksi finansial bersifat terkait/append-only; approval dan hasil finansial disimpan sebagai status berbeda.
+- **Privasi dan Retensi:** Nama takeaway opsional, akun/nomor telepon pelanggan tidak diwajibkan. Akses pemulihan 30 hari tidak berarti semua catatan wajib dihapus setelah 30 hari; aturan retensi hukum tetap perlu ditinjau.
+
+Rincian kolom/relasi baseline dan model tambahan tetap tersedia di bawah. Field masa depan seperti assigned_station tidak mengaktifkan beberapa stasiun dapur pada MVP, dan table_sessions tidak boleh membentuk tagihan gabungan.
+
+<details>
+<summary>Rincian referensi: entitas, kolom, relasi, dan data AI</summary>
 
 ### 6.1 Conceptual Data Model
 
@@ -1239,7 +1453,33 @@ The assigned_station field does not enable multiple KDS stations in MVP. table_s
 
 Physical names, cost representation, JSON field schemas, quotas, cleanup and atomic versus partial publication policy remain TBD. Prefer restaurant-scoped draft/publication integrity with a clearly designed platform metering boundary. Private object storage does not replace database access checks.
 
+</details>
+
 ## 7. Tech Stack
+
+Pilihan teknologi di bawah merupakan keputusan yang sudah dicatat pada PRD, bukan perubahan stack atau klaim bahwa semua layanan sudah diintegrasikan. Revisi ini tidak mengubah kode atau memberikan petunjuk konfigurasi API baru.
+
+| Lapisan | Teknologi | Status |
+|---|---|---|
+| Frontend | React, Vite, TypeScript, Tailwind CSS | Dikonfirmasi A1 |
+| Backend | Hono pada Cloudflare Workers | Dikonfirmasi A1 |
+| ORM/database | Drizzle ORM, PostgreSQL pada Neon | Dikonfirmasi A1/A2; database/project restoran terpisah dan platform pusat |
+| Autentikasi | Neon Managed Better Auth, email/password dan Google OAuth | Dikonfirmasi A3; peran dan keanggotaan diperiksa server |
+| Realtime/pengiriman | Cloudflare Durable Objects WebSockets, Cloudflare Queues, PostgreSQL transactional outbox | Dikonfirmasi A4 |
+| Konsistensi finansial | State machine PostgreSQL, idempotensi, jurnal immutable dan rekonsiliasi | Dikonfirmasi A5 |
+| Jadwal penagihan | Cloudflare Cron dan tabel billing Neon pusat | Dikonfirmasi A6; gateway/instrumen recurring TBD |
+| Printer | Browser/OS print, layout thermal 58/80 mm, PDF, adapter/companion kompatibel opsional | Dikonfirmasi A7; kombinasi hardware harus diuji |
+| Hosting pilot | Cloudflare Workers dan Neon dengan rencana pilot terbatas pada free plan | Dikonfirmasi sebagai arah A8; wajib penilaian risiko/kesiapan sebelum pembayaran live |
+| Komponen Emerald | Customised shadcn/ui dan komponen khusus POS/KDS | Usulan; tidak mengubah kewenangan stack A1 |
+| Form/data frontend | Zod dan TanStack Query | Usulan blueprint; kompatibilitas perlu divalidasi |
+| AI/gambar | Adapter vision/OCR dan penyimpanan objek privat | Usulan; provider/model/penyimpanan TBD |
+
+Blueprint sebelumnya menyebut Next.js, Node/NestJS, Redis, serta model hosting generik. Pilihan tersebut tidak menggantikan A1–A8. Aplikasi lama pada repository merupakan simulasi Next.js/SQLite dan bukan bukti bahwa stack produksi yang disetujui sudah dibangun.
+
+Versi package, batas layanan, biaya aktual, kompatibilitas, dan detail konfigurasi ditentukan pada pekerjaan implementasi/verifikasi berikutnya. Aplikasi native/PWA, offline checkout, dan provider tambahan tidak dijanjikan sebagai MVP.
+
+<details>
+<summary>Rincian referensi: stack yang disetujui dan alternatif blueprint</summary>
 
 ### 7.1 Confirmed stack and proposed compatible components
 
@@ -1270,7 +1510,42 @@ The blueprint's security recommendations—HTTPS, secure cookies or rotated toke
 
 The blueprint mentioned PWA and future native Android/iOS. These are optional proposals; core POS remains a browser application. Offline discovery would require local durable storage, device identity, ordered events, idempotent sync, stock reconciliation and conflict policy. Offline cash checkout is excluded from MVP, and offline QRIS success must never be fabricated.
 
+</details>
+
 ## 8. Deployment
+
+Deployment dilakukan bertahap agar kemampuan yang ditawarkan sesuai dengan integrasi yang benar-benar terverifikasi. Arah pilot menggunakan Cloudflare Workers dan Neon mengikuti A8; penggunaan free plan bukan jaminan kapasitas, availability, atau keamanan finansial.
+
+### Lingkungan dan proses rilis
+
+- **Development:** Data sintetis, identitas/database terpisah, dan pembayaran simulasi/sandbox. Tidak menggunakan kredensial atau uang pelanggan sungguhan.
+- **Staging:** Lingkungan menyerupai produksi untuk menguji provisioning tenant, autentikasi, migrasi, event/reconnect, pembayaran sandbox, hak paket, printer, dan pemulihan. Secret serta referensi merchant terpisah dari produksi.
+- **Pilot Produksi:** Kelompok bisnis terbatas setelah provider, kebijakan finansial, keamanan, backup, monitoring, dukungan, dan penilaian risiko A8 selesai serta persetujuan pembayaran live diperoleh.
+- **Perluasan Produksi:** Dilakukan setelah bukti hasil pilot, kapasitas, target layanan, serta harga dan hak paket yang akan dipasarkan telah dikonfirmasi.
+
+Pipeline yang diusulkan meliputi peninjauan perubahan, pemeriksaan tipe/lint/keamanan serta pengujian yang relevan, deployment staging, validasi migrasi pusat dan setiap restoran, pengujian penerimaan, rilis bertahap, lalu pemeriksaan kesehatan dan rekonsiliasi. Penyedia CI dan detail mekanismenya masih merupakan pilihan implementasi.
+
+### Syarat sebelum rilis
+
+- **Alur Utama Lulus:** Free signup, trial berbayar dengan mandat sah, menu, tunai, struk, sesi kas, KDS, meja/penyajian, takeaway ketat, pengecualian, dan dashboard berjalan sesuai lingkup. QRIS dan meja tetap dikunci ketika syarat merchant/kanal belum terpenuhi.
+- **Integritas Terbukti:** Tidak ada charge atau dispatch ganda, keberhasilan pembayaran/refund palsu, penimpaan transaksi lunas, bypass persetujuan, kebocoran tenant, atau rekonsiliasi kas yang salah.
+- **Provider Terverifikasi:** Kontrak, onboarding, settlement langsung, keamanan callback/status, expiry, refund, serta recurring consent benar-benar didukung. Fitur yang belum terverifikasi tidak boleh dijanjikan aktif. Tidak ada klaim persetujuan Midtrans hanya dari dokumen ini.
+- **Perangkat Teruji:** Jalur cetak thermal/digital lulus pada kombinasi Windows/Android, browser, printer, dan koneksi yang dinyatakan didukung. Tidak ada janji universal bahwa semua USB/Wi-Fi/Ethernet/Bluetooth printer bekerja.
+- **Keputusan Terbuka Ditutup:** Harga, batas paket, matriks fitur, formula pajak/laporan, aturan provider dan target operasional yang diperlukan untuk lingkup rilis sudah diputuskan. Ekspansi AI atau Emerald memerlukan persetujuan tersendiri.
+- **Penerimaan dan Legal:** Jalankan AC-001–AC-050 beserta pengujian provider, perangkat, keamanan, dan privasi yang relevan; selesaikan peninjauan ketentuan pelanggan, privasi, pajak dan retensi yang diperlukan.
+
+### Operasional dan pemulihan
+
+Migrasi database harus berversi dan dapat dipantau per restoran. Rencanakan kegagalan sebagian dan kompatibilitas rilis. Rollback aplikasi tidak boleh menghapus jurnal atau transaksi lunas; gunakan koreksi/migrasi dan pemulihan yang menjaga riwayat finansial.
+
+Pantau kegagalan login, checkout, QRIS pending/terlambat, mismatch nominal, antrean/outbox, reconnect, tagihan, refund, dan insiden keamanan. Redaksi secret/data pribadi pada log. Backup independen mencakup platform, setiap database restoran, serta objek privat yang diperlukan; lakukan uji restore dan rekonsiliasi setelah pemulihan. Jadwal, retensi, residency, RPO/RTO, kapasitas, biaya, ambang alert, dan penanggung jawab operasional masih TBD.
+
+Risiko yang tetap dicatat mencakup kelayakan kerja sama provider, metode recurring yang belum cocok, callback QRIS yang berlomba dengan fallback, meja tersedia sebelum tamu pergi, nomor takeaway yang terlupa, hold menunggu manajer, audio browser terblokir, printer tidak kompatibel, refund tidak tersedia, dan perhitungan finansial yang belum final. Penanganannya mengikuti register risiko serta aturan v1.1; tidak diselesaikan dengan mengubah perilaku diam-diam.
+
+**Batas pekerjaan revisi ini:** Hanya dokumen PRD dan pembaruan PR dokumentasi. Tidak ada perubahan kode aplikasi, merge, deployment, atau aktivasi pembayaran live.
+
+<details>
+<summary>Rincian referensi: release gates, roadmap, risiko, dan operasional</summary>
 
 ### 8.1 MVP Release Gates and Definition of Done
 
@@ -1367,3 +1642,5 @@ Monitor tenant provisioning, login failures/PIN rate limiting, checkout errors, 
 Independent backups must cover central platform and each restaurant database plus required private objects. Encrypt backups and test restorations, including referential consistency and reconciliation after replay. RPO/RTO, schedule, retention, residency and disaster-recovery cost remain TBD. Free provider tiers do not substitute for recovery guarantees. The operational budget and any free-tier limitation require validation before the pilot.
 
 Production acceptance must resolve the applicable TBDs and functional gates in Section 8.1, pass AC-001–AC-050 plus provider/security/device cases, and retain evidence. AI/Emerald inclusion in this document does not enable either proposal or authorise live payment activation.
+
+</details>
