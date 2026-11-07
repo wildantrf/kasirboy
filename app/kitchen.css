@@ -1,0 +1,18 @@
+.order-card.status-new,.order-card.status-preparing,.order-card.status-ready{border-top-width:3px;padding-top:16px}
+.order-card.status-new{border-top-color:#c85b4b}
+.order-card.status-preparing{border-top-color:#d3a744}
+.order-card.status-ready{border-top-color:#90a16c}
+.status.new{background:#f8e5e1;color:#b44f42}
+.status.preparing{background:#f7eddd;color:#b39051}
+.status.ready{background:#eaf0e2;color:#79935d}
+.status.served{background:#f3f3ee;color:#84897e}
+.item-prep{display:inline-flex;align-items:center;margin:6px 0 0;padding:3px 6px;border-radius:4px;font-size:8px;background:#f3f3ee;color:#84897e}
+.item-prep.new{background:#f8e5e1;color:#b44f42}
+.item-prep.preparing{background:#f7eddd;color:#b39051}
+.item-prep.ready{background:#eaf0e2;color:#79935d}
+.item-action{margin-left:auto;border:1px solid #d8dfce;border-radius:5px;background:#f7f8f1;color:#627753;font-size:9px;font-weight:600;padding:6px 8px;white-space:nowrap}
+.item-action:hover{background:#e8eedc}
+.card-action.start-preparing{background:#c85b4b;border-top-color:#b54d3f;color:#fff}
+.card-action.start-preparing:hover{background:#b54d3f}
+.item-action.ready-check{display:flex;align-items:center;gap:4px;background:#fffefa;border-color:#d8dfce;color:#697262}
+.item-action.ready-check:hover{background:#f3f3ee}
