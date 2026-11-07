@@ -7,7 +7,8 @@ function local(req:NextRequest) { const host=(req.headers.get('host')||req.nextU
 function error(e:unknown) { return NextResponse.json({error:e instanceof Fault?e.message:'Something went wrong. Please retry.'},{status:e instanceof Fault?e.status:500}); }
 export async function GET(req:NextRequest) { try {local(req);const s=getStore();s.sweep();const q=req.nextUrl.searchParams;const view=q.get('view');if(view==='cafes')return NextResponse.json(s.cafes());if(view==='menu')return NextResponse.json({cafe:s.cafe(q.get('cafe')||''),menu:s.menu(q.get('cafe')||'')});if(view==='order')return NextResponse.json(s.customerOrder(q.get('cafe')||'',req.cookies.get('mf_customer')?.value||'',q.get('id')||''));const actor=s.session(req.cookies.get('mf_staff')?.value||'');if(!actor)return NextResponse.json({actor:null});return NextResponse.json({actor,...s.staff(actor)});}catch(e){return error(e);} }
 export async function POST(req:NextRequest) {try{local(req);const s=getStore();const raw=await req.text();if(raw.length>20000)throw new Fault('Request too large.',413);let b;try{b=JSON.parse(raw);}catch{throw new Fault('Invalid request.');}let customer=req.cookies.get('mf_customer')?.value||randomUUID();let result:unknown={ok:true};let sessionToken='';
-  if(b.op==='login'){sessionToken=s.login(b.cafe,b.role as Role);}
+  if(b.op==='ownerLogin'){sessionToken=s.ownerLogin(b.email,b.password,b.cafe);}
+  else if(b.op==='login'){sessionToken=s.login(b.cafe,b.role as Role);}
   else if(b.op==='logout')s.logout(req.cookies.get('mf_staff')?.value||'');
   else if(b.op==='checkout')result=s.checkout(b.cafe,customer,b.table,b.items,b.key);
   else if(b.op==='pay')result=s.pay(b.cafe,customer,b.id);

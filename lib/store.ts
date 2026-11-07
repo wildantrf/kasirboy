@@ -51,6 +51,10 @@ export class Store {
   audit(actor: Actor, action: string) { this.db.prepare('INSERT INTO audit VALUES(?,?,?,?,?)').run(id(),actor.cafe,action,actor.role,Date.now()); }
   allow(actor: Actor, roles: Role[]) { this.cafe(actor.cafe); if(!roles.includes(actor.role)) throw new Fault('Your role cannot perform this action.',403); }
   login(cafe: string, role: Role) { this.cafe(cafe); if(!['owner','cashier','kitchen'].includes(role)) throw new Fault('Choose a demo role.'); const token=id(); this.db.prepare('INSERT INTO sessions VALUES(?,?,?,?)').run(token,cafe,role,Date.now()+86400000); return token; }
+  ownerLogin(email:unknown,password:unknown,cafe:string) {
+    if(typeof email!=='string'||email.trim().toLowerCase()!=='owner@mejaflow.demo'||password!=='MejaFlowDemo123!') throw new Fault('Incorrect demo email or password.',401);
+    return this.login(cafe,'owner');
+  }
   session(token: string): Actor | null { const r=this.db.prepare('SELECT * FROM sessions WHERE id=? AND expires>?').get(token,Date.now()) as any; return r ? {cafe:r.cafe,role:r.role}:null; }
   logout(token:string) { this.db.prepare('DELETE FROM sessions WHERE id=?').run(token); }
   team(actor:Actor) { this.allow(actor,['owner']); return this.db.prepare('SELECT id,name,role,active FROM team WHERE cafe=? ORDER BY name,id').all(actor.cafe); }

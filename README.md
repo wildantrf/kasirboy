@@ -6,7 +6,7 @@ A responsive Next.js + TypeScript website with two isolated sample cafes, custom
 
 With the local server running, open http://127.0.0.1:3100.
 
-1. Choose Kopi Senja or Ruang Taman and Owner, Cashier or Kitchen.
+1. The home page at `/` has the demo owner login. Choose a café and use `owner@mejaflow.demo` / `MejaFlowDemo123!` (or click Fill demo details). Login opens `/workspace`. The café selector there still switches demo roles. Log out ends the staff session and returns home. These published credentials provide shared demo access, not private account authentication.
 2. Open Customer preview in another browser tab. It starts at Table 07.
 3. Add items, enter notes, review the all-inclusive total, and continue to simulated payment.
 4. Click Simulate successful payment. No money moves.
@@ -34,7 +34,8 @@ The lockfile records the installed dependency versions. This app uses Next.js 16
 
 ## Sample screens
 
-- `/`: staff workspace, cashier, kitchen, inventory, tables, demo roles, subscription preview.
+- `/`: home page and demo owner login.
+- `/workspace`: staff workspace, cashier, kitchen, inventory, tables, demo roles, subscription preview; signed-out visitors return home.
 - `/order/senja/7`: Kopi Senja customer menu for Table 07.
 - `/order/taman/2`: Ruang Taman customer menu for Table 02.
 - Tables 01-12 exist in each cafe. Tables & QR provides working local-link QR SVGs and downloads.
@@ -60,6 +61,8 @@ SQLite records live in `data/simulation.sqlite` and survive server restarts. Onl
 
 ```text
 node --test tests/store.test.ts
+# With the server running:
+node tests/http-login-check.mjs
 node node_modules/typescript/bin/tsc --noEmit
 node node_modules/next/dist/bin/next build
 ```

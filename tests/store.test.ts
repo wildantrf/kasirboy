@@ -33,3 +33,8 @@ test('staff roster validates input and restricts management and visibility to ca
 test('staff records survive reopening the database',()=>{
  const dir=mkdtempSync(path.join(tmpdir(),'mejaflow-team-'));try{const file=path.join(dir,'team.sqlite');const s=new Store(file);const owner={cafe:'senja',role:'owner'} as const;s.saveStaff(owner,undefined,'Persistent staff','cashier',true);s.db.close();const restored=new Store(file);assert.equal(restored.team(owner)[0].name,'Persistent staff');restored.db.close();}finally{rmSync(dir,{recursive:true,force:true});}
 });
+
+test('demo owner login checks credentials, scopes cafe and logout revokes session',()=>{
+ const s=new Store();assert.throws(()=>s.ownerLogin('owner@mejaflow.demo','wrong','senja'),e=>e instanceof Fault&&e.status===401);assert.throws(()=>s.ownerLogin('wrong@example.com','MejaFlowDemo123!','senja'));assert.throws(()=>s.ownerLogin(null,null,'senja'));assert.throws(()=>s.ownerLogin('owner@mejaflow.demo','MejaFlowDemo123!','unknown'));
+ const token=s.ownerLogin(' OWNER@MEJAFLOW.DEMO ','MejaFlowDemo123!','taman');assert.deepEqual(s.session(token),{cafe:'taman',role:'owner'});s.logout(token);assert.equal(s.session(token),null);s.db.close();
+});
