@@ -1,6 +1,6 @@
 # MejaFlow — Product Requirements Document (PRD)
 
-**Versi:** 2.4 — Draft hasil discovery baru + revisi KDS, katalog & pemesanan QR (D-64, D-65)  
+**Versi:** 2.6 — Draft hasil discovery baru + revisi KDS, katalog & pemesanan QR, pelacak pesanan pelanggan, dan tata letak kasir dua kolom  
 **Tanggal:** 8 November 2026  
 **Bahasa:** Indonesia  
 **Status:** Keputusan produk telah dikonfirmasi melalui wawancara; usulan teknis dan TBD perlu ditinjau sebelum implementasi.
@@ -13,9 +13,13 @@
 
 **Revisi 2.4 (8 November 2026):** Katalog menambah **penghapusan produk** dan **penghapusan kategori kosong** oleh pengguna dengan izin mengelola menu. Layar pesan pelanggan QR dirombak **mobile-first**: daftar menu satu kolom di ponsel dengan foto di kiri teks, dua/tiga kolom di tablet/desktop, foto dapat diketuk untuk diperbesar, kontrol jumlah (−/jumlah/+) pada setiap produk, bilah keranjang tetap di bawah dengan jumlah item dan subtotal, serta layar ringkasan sebelum pembayaran yang hanya menawarkan QRIS. Dikonfirmasi melalui permintaan revisi pengguna, di luar discovery, sehingga belum memiliki nomor D; kebijakan arsip/pemulihan dicatat pada TBD-25.
 
+**Revisi 2.5 (8 November 2026):** Layar pesan pelanggan QR menambah **pelacak pesanan pelanggan** setelah pembayaran lunas: nomor pesanan besar, status berjalan beserta penghitung waktu, empat langkah progres yang mengikuti status KDS cabang, dan rincian pesanan termasuk catatan item serta catatan pesanan. Pelacak hanya menampilkan data transaksi pelanggan itu sendiri dan tidak membuka struk staf. Dikonfirmasi melalui permintaan revisi pengguna, di luar discovery, sehingga belum memiliki nomor D; cakupan akses pelanggan dilanjutkan pada TBD-17.
+
+**Revisi 2.6 (9 November 2026):** Layar kasir dirombak menjadi **dua kolom** — menu produk di kiri dan ringkasan pesanan (keranjang) di kanan — dengan kartu produk **horizontal** (foto kecil di kiri, nama/deskripsi/harga di kanan). Metode pembayaran diubah dari dropdown menjadi **tombol pilihan** (Tunai, QRIS, atau Digital manual). Pada layar sempit kedua panel menumpuk satu kolom (ringkasan di bawah) dan daftar produk otomatis menjadi satu kolom; menu dua kolom atau lebih hanya dipakai saat ringkasan berada di kanan. Dikonfirmasi melalui permintaan revisi pengguna, di luar discovery, sehingga belum memiliki nomor D.
+
 Dokumen ini ditulis dari nol berdasarkan 65 keputusan terbaru pengguna. PRD lama, blueprint sebelumnya, dan perilaku aplikasi yang sudah ada tidak otomatis menjadi persyaratan versi ini. Dokumen ini menjelaskan produk yang akan dibangun, bukan menyatakan semua fiturnya sudah tersedia.
 
-**Cara membaca:** **Dikonfirmasi** berarti berasal dari jawaban pengguna; **Usulan** berarti rancangan untuk mendukung kebutuhan tersebut; **TBD** berarti belum diputuskan. Penanda D-01 sampai D-65 menghubungkan isi dengan keputusan discovery; keputusan revisi 2.3–2.4 yang dikonfirmasi di luar sesi discovery ditandai eksplisit tanpa nomor D. Penambahan batas, alur, atau teknologi yang belum dikonfirmasi tidak boleh diperlakukan sebagai keputusan produk final.
+**Cara membaca:** **Dikonfirmasi** berarti berasal dari jawaban pengguna; **Usulan** berarti rancangan untuk mendukung kebutuhan tersebut; **TBD** berarti belum diputuskan. Penanda D-01 sampai D-65 menghubungkan isi dengan keputusan discovery; keputusan revisi 2.3–2.5 yang dikonfirmasi di luar sesi discovery ditandai eksplisit tanpa nomor D. Penambahan batas, alur, atau teknologi yang belum dikonfirmasi tidak boleh diperlakukan sebagai keputusan produk final.
 
 1. [Overview](#1-overview)
 2. [Requirements](#2-requirements)
@@ -54,6 +58,7 @@ Aplikasi diakses melalui browser komputer, tablet, dan ponsel tanpa kewajiban me
 
 - **Transaksi jelas:** Setiap pesanan memiliki identitas, cabang, produk, catatan, total, metode pembayaran, dan status yang dapat ditelusuri.
 - **Dapur menerima pesanan lunas:** Tidak ada pesanan belum dibayar yang menjadi pekerjaan dapur.
+- **Pelanggan melihat progres pesanannya:** Setelah lunas, pelanggan dapat melihat nomor, status, dan rincian pesanan yang sama dengan yang diterima dapur.
 - **Tunai tetap dapat diterima saat offline:** Satu perangkat utama mencatat transaksi secara lokal dan mengirimnya ketika koneksi kembali.
 - **Cabang tetap terpisah:** Staf bekerja pada cabang yang ditugaskan; pemilik dapat menjalankan operasional semua cabang.
 - **Pilihan paket sederhana:** Free permanen dan satu paket berbayar dengan kapasitas lebih besar serta QR meja/QRIS terintegrasi.
@@ -199,7 +204,7 @@ Register ini membatasi hal yang belum disepakati tanpa memperpanjang discovery u
 | TBD-14 | Izin lengkap tiap peran, pembuatan/login/reset akun staf, akun nonaktif dan hitungan kuota | Manajemen staf produksi |
 | TBD-15 | Verifikasi alternatif pickup, audit/reauth manajer dan cakupan hak pemilik | Handover produksi |
 | TBD-16 | Definisi total penjualan, cutoff tanggal/timezone, filter, akses riwayat dan cabang nonaktif | Laporan produksi |
-| TBD-17 | Akses pelanggan QR ke status/konfirmasi pesanan, identitas/nama, dan batas struk staf | QR meja produksi |
+| TBD-17 | Akses pelanggan QR ke status/konfirmasi pesanan, identitas/nama, dan batas struk staf. **Sudah dijawab sebagian oleh revisi 2.5** (pelacak status setelah lunas); sisa terbuka: pemulihan setelah refresh/tutup browser, identitas pelanggan, dan akses status saat masih pending | QR meja produksi |
 | TBD-18 | Produk tidak tersedia setelah dibayar, kesalahan tunai dan refund eksternal tanpa fitur refund aplikasi | Transaksi produksi |
 | TBD-19 | Desain visual, aksesibilitas, isi profil/receipt dan format nomor pesanan | Desain penerimaan |
 | TBD-20 | Stack final, hosting/residency, kapasitas, auth/email, backup dan target operasional | Pemilihan implementasi |
@@ -264,6 +269,13 @@ Kriteria berikut memverifikasi keputusan produk. Kriteria yang bergantung pada T
 | AC-47 | Navigasi kategori QR | Daftar menu QR dikelompokkan sesuai urutan kategori; chip kategori mengikuti posisi gulir dan dapat diketuk untuk melompat; chip tetap satu baris dan dapat digulir horizontal bila melebihi lebar layar |
 | AC-48 | Keranjang & ringkasan QR | Pelanggan melihat jumlah item dan subtotal pada bilah keranjang bawah, membuka layar ringkasan berisi item, catatan, jumlah dan biaya, lalu membayar hanya melalui QRIS |
 | AC-49 | Foto & tata letak QR | Foto produk tampil di kiri teks pada daftar QR dan dapat diketuk untuk membuka tampilan besar; tata letak memakai satu kolom di ponsel serta dua/tiga kolom di tablet/desktop |
+| AC-50 | Pelacak pesanan pelanggan | Setelah pembayaran lunas, pelanggan melihat nomor pesanan sebagai judul utama, status sekarang, dan empat langkah progres (diterima dapur → sedang disiapkan → siap disajikan → selesai) yang mengikuti status KDS cabang; tanpa KDS, pesanan tampil Selesai tanpa langkah persiapan |
+| AC-51 | Rincian pelacak | Rincian pesanan pada pelacak memuat item, jumlah, catatan per item, catatan pesanan, serta total dibayar dan status Lunas; catatan yang diisi pelanggan pada layar ringkasan tampil di pelacak |
+| AC-52 | Akses pelacak | Pelacak hanya menampilkan pesanan yang dibuat pada sesi/tabel tersebut dan tidak membuka struk staf; perubahan status diumumkan ke pembaca layar tanpa mengumumkan penghitung waktu setiap detik |
+| AC-53 | Kasir dua kolom | Menu produk tampil di kiri dan ringkasan pesanan (keranjang) di kanan; pada layar sempit keduanya menumpuk satu kolom dengan ringkasan di bawah menu |
+| AC-54 | Kartu produk horizontal | Kartu produk menampilkan foto kecil di kiri yang mengisi tinggi kartu, serta nama, deskripsi, dan harga di kanan |
+| AC-55 | Metode pembayaran tombol | Metode pembayaran dipilih lewat tombol pilihan (Tunai, QRIS, atau Digital manual), bukan dropdown |
+| AC-56 | Menu satu kolom saat ringkasan di bawah | Saat ringkasan pesanan berada di bawah menu, daftar produk hanya satu kolom; dua kolom atau lebih hanya dipakai ketika ringkasan berada di kanan |
 
 ## 3. Core Features
 
@@ -302,6 +314,15 @@ Midtrans dipilih sebagai **kandidat**, bukan integrasi yang telah dijamin tersed
 Gerbang merchant ditujukan untuk QRIS; PRD baru tidak menetapkan verifikasi Midtrans sebagai syarat menjalankan meja atau transaksi tunai. Kebijakan saat QRIS belum aktif harus menjelaskan fitur yang belum dapat dipakai tanpa menjanjikan QR self-order sudah berjalan.
 
 **Dikonfirmasi melalui revisi 2.4.** Layar pesan pelanggan dioptimalkan untuk **ponsel** dan tetap memakai lebar penuh pada tablet/desktop. Daftar menu dikelompokkan per kategori sesuai urutan tampil cabang, dengan **foto produk di kiri teks**; mengetuk foto membuka tampilan besar. Chip kategori menempel saat menggulir, menyorot kategori yang sedang dilihat, dan dapat diketuk untuk melompat; chip tetap satu baris dan dapat digulir horizontal bila melebihi lebar layar. Setiap produk menampilkan kontrol jumlah **−/jumlah/+**, dan **bilah keranjang tetap di bawah** menampilkan jumlah item serta subtotal dengan tombol **Pesan**. Tombol tersebut membuka layar **ringkasan pesanan** berisi item, catatan per item, jumlah, catatan pesanan, dan rincian biaya; pembayaran di layar pelanggan hanya **QRIS**.
+
+**Dikonfirmasi melalui revisi 2.5.** Setelah pembayaran terverifikasi, layar pelanggan beralih ke **pelacak pesanan** alih-alih kembali ke menu. Pelacak menampilkan:
+
+1. **Nomor pesanan** sebagai judul utama di kartu tiket, dengan nama cabang, meja, dan waktu pembayaran sebagai metadata sekunder.
+2. **Status sekarang** beserta antrean dapur bila cabang memakai KDS, dan **penghitung waktu berjalan** sejak pembayaran lunas.
+3. **Empat langkah progres** — diterima dapur, sedang disiapkan, siap disajikan, selesai — yang mengikuti status KDS cabang. Ketika cabang tidak memiliki staf dapur, pesanan tampil **Selesai** tanpa langkah persiapan, sesuai aturan penyelesaian langsung.
+4. **Rincian pesanan**: item, jumlah, catatan per item, catatan pesanan, total dibayar, dan status Lunas. Catatan yang diisi pelanggan pada layar ringkasan wajib ikut tampil di sini.
+
+Pelacak hanya menampilkan pesanan yang dibuat pada tabel tersebut dan **tidak** membuka struk staf, pembagian struk ke pelanggan, atau PDF. Tombol **Pesan tambahan** membuka menu kembali; pesanan tambahan tetap memakai nomor dan pembayaran baru sesuai aturan pesanan semeja. Pemulihan status setelah refresh, identitas pelanggan, dan akses status saat masih pending belum diputuskan dan tetap pada TBD-17.
 
 ### 3.5 KDS dan penyelesaian
 
@@ -342,6 +363,7 @@ Laporan hanya mencakup **total penjualan dan daftar riwayat transaksi**, per cab
 - Galeri multi-foto per produk, unggah foto oleh pelanggan QR, dan penyuntingan gambar lanjutan (crop manual, filter).
 - Split/mixed payments, draft keranjang tersimpan, dan prioritas KDS manual.
 - Thermal printing, pengiriman struk pelanggan, sesi kas dan rekonsiliasi laci.
+- Pembatalan, penggantian, atau refund pesanan lewat pelacak pelanggan; pelacak bersifat tampilan status saja.
 - Aplikasi native atau kewajiban instalasi PWA; offline browser tetap memerlukan validasi kompatibilitas.
 
 ### 3.9 Fitur lanjutan: AI menu cetak
@@ -379,12 +401,13 @@ Usulan alur berikutnya: unggah foto → hasil draft → cocokkan dengan gambar �
 2. Sistem memeriksa paket, cabang yang operasional, serta kesiapan kanal QRIS.
 3. Pelanggan memilih produk Tersedia dari daftar per kategori; jumlah dapat ditambah/dikurangi langsung dari kartu produk atau layar ringkasan. Catatan per item diisi pada layar ringkasan; tidak ada tambahan berbayar atau diskon pelanggan.
 4. Bilah keranjang bawah menampilkan jumlah item dan subtotal. Menekan **Pesan** membuka layar ringkasan berisi item, catatan, jumlah, catatan pesanan, dan rincian biaya.
-5. Pelanggan menekan bayar; layar pelanggan hanya menawarkan QRIS. Sistem membuat percobaan QRIS untuk total final dalam rupiah.
+5. Pelanggan menekan bayar; layar pelanggan hanya menawarkan QRIS. Sistem membuat percobaan QRIS untuk total final dalam rupiah. Ringkasan memuat catatan per item dan **catatan pesanan** opsional; keduanya wajib ikut tersimpan pada pesanan.
 6. Selama Pending, pesanan belum masuk dapur. Menutup browser tidak menghapus referensi percobaan.
 7. Server memverifikasi hasil provider. Jika lunas, jalankan routing sesuai KDS cabang, tepat satu kali.
-8. Pesanan tambahan di meja yang sama memulai nomor/pembayaran baru.
+8. Layar pelanggan beralih ke **pelacak pesanan** (lihat 3.4): nomor pesanan, status sekarang, empat langkah progres, dan rincian pesanan beserta catatannya. Pelanggan dapat menekan **Pesan tambahan** untuk kembali ke menu.
+9. Pesanan tambahan di meja yang sama memulai nomor/pembayaran baru.
 
-**TBD:** Identitas pelanggan, akses untuk membuka kembali status pesanan, informasi konfirmasi yang diperlihatkan, dan hubungan dengan struk staf. Tidak diwajibkan akun pelanggan atau pengiriman email/WhatsApp hanya karena tersedia QR meja. Untuk cabang tanpa staf dapur, keputusan saat ini tetap menyelesaikan transaksi segera setelah lunas.
+**TBD:** Identitas pelanggan, akses untuk membuka kembali status pesanan setelah refresh/tutup browser, informasi konfirmasi yang diperlihatkan saat status masih pending, dan hubungan dengan struk staf. Tampilan pelacak setelah lunas sudah dikonfirmasi pada revisi 2.5; bentuk pemulihannya belum. Tidak diwajibkan akun pelanggan atau pengiriman email/WhatsApp hanya karena tersedia QR meja. Untuk cabang tanpa staf dapur, keputusan saat ini tetap menyelesaikan transaksi segera setelah lunas.
 
 ### 4.4 Dapur dan handover
 
@@ -419,7 +442,7 @@ Jika masa trial/berbayar habis tanpa pembayaran lanjutan, pemilik memilih satu c
 | Objek | Status/perubahan yang dibutuhkan | Catatan |
 |---|---|---|
 | Keranjang | Sedang diisi → bayar atau buang | Tidak ada save/resume draft |
-| Layar pesan QR | Menu → keranjang → ringkasan → percobaan QRIS | Pelanggan dapat kembali ke menu; ringkasan bukan draft tersimpan |
+| Layar pesan QR | Menu → keranjang → ringkasan → percobaan QRIS → pelacak pesanan | Pelanggan dapat kembali ke menu; ringkasan bukan draft tersimpan; pelacak hanya setelah lunas |
 | Percobaan QRIS | Pending → lunas terverifikasi/gagal/kedaluwarsa/penanganan status tidak pasti | Nilai tepat dan transisi provider divalidasi saat integrasi |
 | Pembayaran tunai/manual | Belum dikonfirmasi → lunas dikonfirmasi kasir | Jangan menyebut digital manual sebagai verifikasi otomatis provider |
 | Pesanan online dengan KDS | Lunas/Baru → Sedang Disiapkan → Siap → (dine-in) dikonfirmasi disajikan / (takeaway) diserahkan → Selesai | Pembayaran dan progres fulfillment adalah status berbeda |

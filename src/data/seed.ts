@@ -16,6 +16,7 @@ import type {
 } from '../types/domain';
 import { computeTotals } from '../lib/money';
 import { PLAN_PRICES } from '../lib/entitlements';
+import { productPhoto } from './productPhotos';
 
 export const DEMO_PASSWORD = 'mejaflow123';
 
@@ -193,6 +194,7 @@ const products: Product[] = productPlan.map((seed) => {
     name: seed.name,
     description: seed.description,
     price: seed.price,
+    photo: productPhoto(seed.id),
     availability: seed.soldOut ? 'sold_out' : 'available',
     updatedAt: '2026-02-01T04:00:00.000Z',
   };
