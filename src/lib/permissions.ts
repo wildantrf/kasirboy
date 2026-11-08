@@ -10,6 +10,7 @@ export type Permission =
   | 'reports.view'
   | 'kds.view'
   | 'handover.confirm'
+  | 'served.confirm'
   | 'pickup.override'
   | 'billing.manage'
   | 'branch.settings'
@@ -47,6 +48,7 @@ const PERMISSIONS: Record<Role, Permission[]> = {
     'reports.view',
     'kds.view',
     'handover.confirm',
+    'served.confirm',
     'pickup.override',
     'billing.manage',
     'branch.settings',
@@ -61,13 +63,14 @@ const PERMISSIONS: Record<Role, Permission[]> = {
     'reports.view',
     'kds.view',
     'handover.confirm',
+    'served.confirm',
     'pickup.override',
     'branch.settings',
     'device.manage',
   ],
-  cashier: ['pos.run', 'handover.confirm', 'kds.view'],
+  cashier: ['pos.run', 'handover.confirm', 'served.confirm', 'kds.view'],
   kitchen: ['kds.view'],
-  waiter: ['handover.confirm'],
+  waiter: ['handover.confirm', 'served.confirm'],
 };
 
 export function can(role: Role | null | undefined, permission: Permission): boolean {

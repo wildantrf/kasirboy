@@ -50,7 +50,7 @@ Kredensial ini hanya untuk demo. Pada produksi, kata sandi wajib di-hash di serv
 - **Ringkasan** — penjualan hari ini, tren 7 hari, status dapur, antrean offline, hal yang perlu perhatian.
 - **Kasir** — dine-in/takeaway, meja, catatan item, diskon (pemilik/manajer), rincian biaya, tunai/digital manual/QRIS, struk staf.
 - **Pesanan & detail** — riwayat, status pembayaran vs pemenuhan, kesiapan item, QRIS pending, penyerahan takeaway, override nomor hilang.
-- **Dapur (KDS)** — kolom Baru / Disiapkan / Siap, FIFO berdasarkan pembayaran lunas, kesiapan per item, penyerahan takeaway.
+- **Dapur (KDS)** — kolom Baru / Disiapkan / Siap, FIFO berdasarkan pembayaran lunas, kesiapan per item (tekan baris item), konfirmasi penyajian dine-in, penyerahan takeaway, tanpa menampilkan nilai pesanan.
 - **Menu & harga** — produk per cabang, kategori, status Tersedia ↔ Habis.
 - **Meja & QR** — proyeksi okupansi dari pesanan, tautan QR meja, salin tautan.
 - **Staf** — satu peran + satu cabang per akun, kuota paket, aktivasi/nonaktivasi.
@@ -66,7 +66,7 @@ Kredensial ini hanya untuk demo. Pada produksi, kata sandi wajib di-hash di serv
 - **Satu metode pembayaran** per pesanan; tidak ada split/parsial.
 - **Lunas sebelum dapur**: tiket KDS hanya dibuat setelah pembayaran sah (cash/manual dikonfirmasi kasir, QRIS diverifikasi provider).
 - **Routing KDS**: per cabang, hanya bila ada staf dapur aktif. Tanpa staf dapur atau transaksi tunai offline → langsung Selesai tanpa tiket.
-- **KDS**: tiket `Baru` tetap Baru sampai "Mulai Persiapan"; dine-in selesai otomatis saat semua item Siap; takeaway menunggu penyerahan.
+- **KDS**: tiket `Baru` tetap Baru sampai "Mulai Persiapan"; dine-in pindah ke kolom Siap saat semua item Siap dan selesai setelah staf mengonfirmasi penyajian; takeaway menunggu penyerahan. KDS tidak menampilkan nilai total/biaya, dan menekan teks/baris item menandainya Siap (D-64, D-65).
 - **Pickup**: nomor harus cocok; nomor hilang memerlukan override manajer dengan alasan + bukti alternatif yang diaudit.
 - **Paket**: Free 1 cabang/1 staf dan hanya tunai + digital manual; Berbayar 5 cabang/10 staf per cabang dan tunai + QRIS. QR meja hanya Berbayar dan wajib QRIS aktif.
 - **Downgrade**: memilih satu cabang + satu staf; cabang/staf lain dinonaktifkan tanpa menghapus data, transaksi lunas tidak berubah.
@@ -92,6 +92,19 @@ src/
 ```
 
 Arsitektur mengikuti kandidat PRD: **TypeScript + React + Vite**. Tidak ada framework UI eksternal; sistem komponen dan token ditulis sendiri agar tampilan tidak bergantung pada default library.
+
+## Deploy ke Vercel
+
+Ini adalah SPA statis (Vite). Vercel hanya menyediakan Node **26.x**, **24.x**, dan **22.x**; Node 18 sudah discontinued sehingga build gagal dengan pesan `Found invalid or discontinued Node.js Version: "18.x"`.
+
+1. Push repo ke GitHub.
+2. Vercel → **Add New Project** → import repo.
+3. **Settings → Build and Deployment → Node.js Version** → pilih **26.x**. Repo juga sudah mematok `engines.node: "26.x"` di `package.json`, yang menimpa setting project.
+4. Build command `npm run build`, output `dist` (dikonfigurasi di `vercel.json`).
+5. **Redeploy** project lama setelah mengubah versi Node; deployment sebelumnya tidak berubah otomatis.
+6. `vercel.json` juga menambahkan rewrite SPA agar URL seperti `/kasir`, `/laporan`, dan `/qr/...` tidak 404 saat dibuka langsung atau di-refresh.
+
+Tidak ada environment variable atau backend yang dibutuhkan untuk demo ini.
 
 ## Catatan implementasi
 

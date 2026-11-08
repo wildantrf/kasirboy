@@ -285,6 +285,7 @@ export type AuditAction =
   | 'staff.created'
   | 'staff.deactivated'
   | 'pickup.override'
+  | 'served.confirmed'
   | 'plan.trial_activated'
   | 'plan.invoice_paid'
   | 'plan.downgraded'

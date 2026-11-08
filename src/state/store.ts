@@ -141,6 +141,7 @@ export interface AppActions {
   markItemReady: (orderId: string, itemId: string) => void;
   markAllItemsReady: (orderId: string) => void;
   confirmHandover: (orderId: string, enteredNumber: string) => void;
+  confirmServed: (orderId: string) => void;
   overridePickup: (orderId: string, input: { reason: string; evidence: string }) => void;
 
   registerPrimaryDevice: (branchId: string, label: string) => RegisteredDevice;
@@ -915,22 +916,11 @@ export function createAppStore(): AppStore {
     let nextJob: KitchenJob = { ...job, status: 'preparing', startedAt: job.startedAt ?? readyAt };
 
     if (allReady) {
-      if (order.type === 'dine_in') {
-        nextOrder = {
-          ...nextOrder,
-          fulfillmentState: 'completed',
-          completedAt: readyAt,
-        };
-        nextJob = {
-          ...nextJob,
-          status: 'completed',
-          readyAt,
-          completedAt: readyAt,
-        };
-      } else {
-        nextOrder = { ...nextOrder, fulfillmentState: 'awaiting_handover' };
-        nextJob = { ...nextJob, status: 'ready', readyAt };
-      }
+      nextJob = { ...nextJob, status: 'ready', readyAt };
+      nextOrder =
+        order.type === 'dine_in'
+          ? { ...nextOrder, fulfillmentState: 'ready', completedAt: null }
+          : { ...nextOrder, fulfillmentState: 'awaiting_handover' };
     }
 
     commit({
@@ -1841,6 +1831,45 @@ export function createAppStore(): AppStore {
       completeHandover(order, context, {
         matchedNumber: enteredNumber.trim(),
         override: false,
+      });
+    },
+
+    confirmServed(orderId) {
+      const context = requirePermission('served.confirm');
+      const order = findOrder(orderId);
+      branchInScope(order.branchId);
+
+      if (order.type !== 'dine_in') {
+        throw new AppError('serve/not-dine-in', 'Konfirmasi penyajian hanya untuk pesanan dine-in.');
+      }
+      if (order.fulfillmentState === 'completed') {
+        throw new AppError('serve/done', 'Pesanan ini sudah diselesaikan.');
+      }
+      if (order.fulfillmentState !== 'ready') {
+        throw new AppError(
+          'serve/not-ready',
+          'Semua item harus Siap sebelum penyajian dapat dikonfirmasi.',
+        );
+      }
+
+      const at = nowIso();
+      const completed: Order = { ...order, fulfillmentState: 'completed', completedAt: at };
+
+      commit({
+        ...state,
+        orders: state.orders.map((candidate) =>
+          candidate.id === order.id ? completed : candidate,
+        ),
+        kitchenJobs: state.kitchenJobs.map((job) =>
+          job.orderId === order.id ? { ...job, status: 'completed', completedAt: at } : job,
+        ),
+        auditEvents: pushAudit(state.auditEvents, {
+          businessId: order.businessId,
+          branchId: order.branchId,
+          actorName: context.actorName,
+          action: 'served.confirmed',
+          detail: `${order.number} dikonfirmasi sudah disajikan (${order.tableLabel ?? 'dine-in'}).`,
+        }),
       });
     },
 

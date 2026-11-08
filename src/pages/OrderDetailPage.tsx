@@ -31,6 +31,23 @@ export function OrderDetailPage() {
     return null;
   }
 
+  if (!can(session.role, 'pos.run') && !can(session.role, 'handover.confirm') && !can(session.role, 'reports.view')) {
+    return (
+      <Card>
+        <EmptyState
+          icon="lock"
+          title="Detail pesanan tidak tersedia untuk peran ini"
+          description="Staf dapur bekerja dari KDS; nilai pesanan dan struk tidak ditampilkan."
+          action={
+            <Link to="/dapur" className="btn btn--primary btn--sm">
+              Buka KDS
+            </Link>
+          }
+        />
+      </Card>
+    );
+  }
+
   if (!order) {
     return (
       <Card>
@@ -56,6 +73,7 @@ export function OrderDetailPage() {
   const canHandover = can(session.role, 'handover.confirm');
   const canOverride = can(session.role, 'pickup.override');
   const canPayment = can(session.role, 'pos.run');
+  const canServe = can(session.role, 'served.confirm');
 
   function handleHandover(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -87,10 +105,31 @@ export function OrderDetailPage() {
     }
   }
 
+  function handleServed() {
+    try {
+      actions.confirmServed(activeOrder.id);
+      pushToast({
+        tone: 'success',
+        title: 'Penyajian dikonfirmasi',
+        message: 'Pesanan selesai; meja dilepas setelah semua pesanan terkait selesai.',
+      });
+    } catch (caught) {
+      pushToast({ tone: 'error', title: 'Belum dapat dikonfirmasi', message: describeError(caught) });
+    }
+  }
+
   const fulfillmentDetail =
     order.fulfillmentMode === 'kds'
       ? job
-        ? `Tiket dapur #${job.sequence} · ${job.status}`
+        ? `Tiket dapur #${job.sequence} · ${
+            job.status === 'new'
+              ? 'Baru'
+              : job.status === 'preparing'
+                ? 'Disiapkan'
+                : job.status === 'ready'
+                  ? 'Siap'
+                  : 'Selesai'
+          }`
         : 'Tiket dapur tidak ditemukan'
       : order.fulfillmentMode === 'offline_sync'
         ? 'Transaksi tunai offline — selesai tanpa KDS'
@@ -174,9 +213,11 @@ export function OrderDetailPage() {
                       ? 'Selesai'
                       : order.fulfillmentState === 'awaiting_handover'
                         ? 'Menunggu penyerahan'
-                        : order.fulfillmentState === 'new'
-                          ? 'Tiket baru'
-                          : 'Sedang disiapkan'}
+                        : order.fulfillmentState === 'ready'
+                          ? 'Siap, menunggu konfirmasi penyajian'
+                          : order.fulfillmentState === 'new'
+                            ? 'Tiket baru'
+                            : 'Sedang disiapkan'}
                   </strong>
                   <p className="small muted">{fulfillmentDetail}</p>
                 </div>
@@ -216,10 +257,20 @@ export function OrderDetailPage() {
                 ))}
               </ul>
               <div className="inline" style={{ marginTop: 12 }}>
+                {order.type === 'dine_in' && order.fulfillmentState === 'ready' ? (
+                  <Button variant="primary" onClick={handleServed} disabled={!canServe}>
+                    Konfirmasi sudah disajikan
+                  </Button>
+                ) : null}
                 <Link to="/dapur" className="btn btn--secondary btn--sm">
                   Buka layar dapur
                 </Link>
               </div>
+              {order.type === 'dine_in' && order.fulfillmentState === 'ready' && !canServe ? (
+                <p className="small muted">
+                  Konfirmasi penyajian dilakukan kasir, pelayan, manajer, atau pemilik.
+                </p>
+              ) : null}
             </Card>
           ) : (
             <Card>

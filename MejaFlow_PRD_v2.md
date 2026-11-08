@@ -1,13 +1,17 @@
 # MejaFlow — Product Requirements Document (PRD)
 
-**Versi:** 2.0 — Draft hasil discovery baru  
+**Versi:** 2.2 — Draft hasil discovery baru + revisi KDS (D-64, D-65)  
 **Tanggal:** 8 November 2026  
 **Bahasa:** Indonesia  
 **Status:** Keputusan produk telah dikonfirmasi melalui wawancara; usulan teknis dan TBD perlu ditinjau sebelum implementasi.
 
-Dokumen ini ditulis dari nol berdasarkan 63 keputusan terbaru pengguna. PRD lama, blueprint sebelumnya, dan perilaku aplikasi yang sudah ada tidak otomatis menjadi persyaratan versi ini. Dokumen ini menjelaskan produk yang akan dibangun, bukan menyatakan semua fiturnya sudah tersedia.
+**Revisi 2.1 (8 November 2026):** KDS tidak menampilkan nilai total maupun komponen biaya pesanan; teks item diperbesar dengan jarak lebih lega; menekan teks/baris item menandai item tersebut Siap. **Dikonfirmasi: D-64.**
 
-**Cara membaca:** **Dikonfirmasi** berarti berasal dari jawaban pengguna; **Usulan** berarti rancangan untuk mendukung kebutuhan tersebut; **TBD** berarti belum diputuskan. Penanda D-01 sampai D-63 menghubungkan isi dengan keputusan discovery. Penambahan batas, alur, atau teknologi yang belum dikonfirmasi tidak boleh diperlakukan sebagai keputusan produk final.
+**Revisi 2.2 (8 November 2026):** Dine-in dengan KDS dipindahkan ke kolom Siap setelah semua item Siap dan baru selesai setelah staf mengonfirmasi penyajian. **Dikonfirmasi: D-65.**
+
+Dokumen ini ditulis dari nol berdasarkan 65 keputusan terbaru pengguna. PRD lama, blueprint sebelumnya, dan perilaku aplikasi yang sudah ada tidak otomatis menjadi persyaratan versi ini. Dokumen ini menjelaskan produk yang akan dibangun, bukan menyatakan semua fiturnya sudah tersedia.
+
+**Cara membaca:** **Dikonfirmasi** berarti berasal dari jawaban pengguna; **Usulan** berarti rancangan untuk mendukung kebutuhan tersebut; **TBD** berarti belum diputuskan. Penanda D-01 sampai D-65 menghubungkan isi dengan keputusan discovery. Penambahan batas, alur, atau teknologi yang belum dikonfirmasi tidak boleh diperlakukan sebagai keputusan produk final.
 
 1. [Overview](#1-overview)
 2. [Requirements](#2-requirements)
@@ -107,6 +111,7 @@ Pemilik berada di luar batas jumlah staf. Rincian apakah akun nonaktif tetap dih
 | Memasukkan diskon sebelum pembayaran | Hanya pemilik atau manajer |
 | Memulai persiapan/menandai siap | Staf dapur pada KDS cabangnya; pemilik dapat menjalankan operasional |
 | Konfirmasi penyerahan takeaway | Kasir/staf sesuai izin; izin detail pelayan/manajer perlu dimatangkan |
+| Konfirmasi pesanan dine-in sudah disajikan | Staf di cabang (kasir, pelayan, manajer, pemilik); aksi dicatat sebagai actor |
 | Mengizinkan pickup ketika nomor hilang | Manajer setelah pemeriksaan alternatif yang dicatat |
 | Prioritas KDS manual | Tidak tersedia untuk siapa pun |
 | Pembatalan/replacement/refund pesanan lunas | Tidak tersedia melalui aplikasi versi pertama |
@@ -231,7 +236,7 @@ Kriteria berikut memverifikasi keputusan produk. Kriteria yang bergantung pada T
 | AC-25 | KDS manual start | Tiket Baru tetap Baru sampai Mulai Persiapan ditekan; tidak otomatis Preparing |
 | AC-26 | Kesiapan item | Satu item belum siap membuat pesanan belum Siap; Tandai Semua Siap memperbarui semua item yang berlaku |
 | AC-27 | FIFO | Antrean mengikuti urutan pembayaran lunas tanpa kontrol prioritas manual |
-| AC-28 | Dine-in KDS | Semua item Siap langsung menyelesaikan dine-in; tidak menunggu Served |
+| AC-28 | Dine-in KDS | Semua item Siap memindahkan tiket ke kolom Siap; pesanan selesai setelah staf mengonfirmasi sudah disajikan |
 | AC-29 | Takeaway KDS | Semua item Siap belum menyelesaikan takeaway sampai penyerahan dikonfirmasi |
 | AC-30 | Pickup | Nomor cocok memungkinkan penyerahan; nomor hilang memerlukan pemeriksaan alternatif dan izin manajer tercatat |
 | AC-31 | Tanpa dapur | Pesanan langsung Selesai setelah lunas, tanpa tracking atau tiket KDS |
@@ -244,6 +249,8 @@ Kriteria berikut memverifikasi keputusan produk. Kriteria yang bergantung pada T
 | AC-38 | Penyimpanan gagal | Kehabisan kuota/write failure tidak ditampilkan sebagai transaksi lokal berhasil |
 | AC-39 | Struk | Struk digital tersedia bagi staf sesuai izin; tidak ada share pelanggan, PDF pelanggan atau thermal printing |
 | AC-40 | Laporan | Total penjualan cocok dengan definisi yang disetujui dan riwayat; tidak ada modul shift/selisih kas |
+| AC-41 | KDS tanpa nilai uang | Tiket KDS tidak menampilkan total/biaya pesanan; teks item lebih besar dan menekan teks/baris item menandainya Siap |
+| AC-42 | Konfirmasi disajikan | Dine-in tetap di kolom Siap sampai staf mengonfirmasi penyajian; setelah konfirmasi pesanan selesai dan meja dilepas bila tidak ada pesanan aktif lain |
 
 ## 3. Core Features
 
@@ -279,18 +286,22 @@ Gerbang merchant ditujukan untuk QRIS; PRD baru tidak menetapkan verifikasi Midt
 
 | Kondisi | Setelah lunas | Langkah berikutnya | Kapan selesai |
 |---|---|---|---|
-| Online, cabang memiliki staf dapur, dine-in | Tiket Baru | Mulai Persiapan → kesiapan item | Semua item Siap; tanpa konfirmasi penyajian |
+| Online, cabang memiliki staf dapur, dine-in | Tiket Baru | Mulai Persiapan → kesiapan item → kolom Siap | Setelah staf mengonfirmasi sudah disajikan |
 | Online, cabang memiliki staf dapur, takeaway | Tiket Baru | Mulai Persiapan → semua item Siap → tunggu penyerahan | Kasir/staf mengonfirmasi penyerahan |
 | Online, cabang tanpa staf dapur | Selesai | Tidak ada tracking | Saat pembayaran penuh dikonfirmasi |
 | Offline, tunai pada perangkat utama | Selesai lokal | Sinkronkan riwayat saat online; tidak dispatch | Saat pembayaran dicatat dan tersimpan lokal |
 
-Antrean KDS berdasarkan urutan pembayaran lunas, tanpa prioritas manual. Item ditandai siap satu per satu atau melalui **Tandai Semua Siap**. Teknologi dapat menyimpan timestamp/urutan server untuk mengurutkan pembayaran bersamaan; kebijakan tie-break teknis belum final.
+**Dikonfirmasi: D-64.** KDS tidak menampilkan nilai total maupun komponen biaya pesanan. Tiket hanya memuat nomor pesanan, tipe/meja, waktu, nama produk, jumlah, dan catatan item. Identitas meja (atau “Takeaway” bila tanpa meja) ditampilkan sebagai judul tiket yang besar dan tebal, sedangkan nomor pesanan dan waktu menjadi metadata sekunder. Teks item diperbesar dan jarak antarbaris ditambah agar terbaca dari area dapur; menekan teks item (seluruh baris item) menandai item tersebut Siap, setara dengan kontrol per item sebelumnya. **Tandai Semua Siap** tetap tersedia.
+
+**Dikonfirmasi: D-65.** Pesanan dine-in yang seluruh itemnya Siap dipindahkan ke kolom Siap, bukan langsung Selesai. Staf mengonfirmasi apakah pesanan sudah disajikan; setelah konfirmasi, pesanan Selesai dan meja dapat dilepas. Takeaway tetap memakai konfirmasi penyerahan.
+
+Antrean KDS berdasarkan urutan pembayaran lunas, tanpa prioritas manual. Item ditandai siap satu per satu dengan menekan baris item, atau melalui **Tandai Semua Siap**. Teknologi dapat menyimpan timestamp/urutan server untuk mengurutkan pembayaran bersamaan; kebijakan tie-break teknis belum final.
 
 Takeaway yang menunggu penyerahan membutuhkan nomor pesanan yang cocok. Bila nomor hilang, manajer dapat mengizinkan setelah pemeriksaan alternatif yang dicatat. Bukan aturan “tanpa override” dari dokumen lama. Proses handover yang diulang tidak boleh menandai selesai dua kali.
 
 ### 3.6 Meja dan pesanan tambahan
 
-Meja otomatis Tersedia setelah seluruh pesanan terkait selesai. Pada cabang tanpa KDS, transaksi selesai ketika dibayar; pada cabang dengan KDS, dine-in selesai saat semua item Siap. Karena itu status Tersedia tidak menjamin pelanggan sudah meninggalkan tempat duduk. Ini konsekuensi yang sudah dijelaskan dan dipilih pengguna. **D-27.**
+Meja otomatis Tersedia setelah seluruh pesanan terkait selesai. Pada cabang tanpa KDS, transaksi selesai ketika dibayar; pada cabang dengan KDS, dine-in selesai setelah semua item Siap dan staf mengonfirmasi penyajian. Konfirmasi berasal dari staf, bukan sensor okupansi fisik; status Tersedia tetap tidak menjamin pelanggan sudah meninggalkan tempat duduk. Ini konsekuensi yang sudah dijelaskan dan dipilih pengguna. **D-27, D-65.**
 
 Tambahan pembelian pada meja yang sama menjadi pesanan baru dengan nomor dan pembayaran sendiri. Tidak ada tagihan meja bersama yang terus ditambah setelah lunas. **D-28.** Pembuatan/penempatan meja, saat awal Occupied, pending pembayaran, dan perpindahan meja perlu diselesaikan pada TBD-12; jangan menerapkan ulang workflow lama tanpa review.
 
@@ -305,7 +316,7 @@ Laporan hanya mencakup **total penjualan dan daftar riwayat transaksi**, per cab
 - Pembatalan, penggantian dan refund pesanan lunas melalui aplikasi. Penanganan eksternal tetap perlu prosedur sebelum menerima uang nyata; fitur tersebut tidak ditambahkan diam-diam. **D-31.**
 - Inventori jumlah, bahan baku, resep/HPP, purchasing dan stok otomatis.
 - Varian/modifier berbayar, voucher, promo otomatis, loyalty dan CRM.
-- Split/mixed payments, draft keranjang tersimpan, prioritas KDS manual, dan konfirmasi Served dine-in.
+- Split/mixed payments, draft keranjang tersimpan, dan prioritas KDS manual.
 - Thermal printing, pengiriman struk pelanggan, sesi kas dan rekonsiliasi laci.
 - Aplikasi native atau kewajiban instalasi PWA; offline browser tetap memerlukan validasi kompatibilitas.
 
@@ -352,7 +363,7 @@ Usulan alur berikutnya: unggah foto → hasil draft → cocokkan dengan gambar �
 
 ### 4.4 Dapur dan handover
 
-**Dine-in dengan KDS:** Lunas → Baru → staf dapur menekan Mulai Persiapan → Sedang Disiapkan → item Siap satu per satu/semua → seluruh item Siap → Selesai. Tidak ada tahap wajib konfirmasi penyajian.
+**Dine-in dengan KDS:** Lunas → Baru → staf dapur menekan Mulai Persiapan → Sedang Disiapkan → item Siap satu per satu (menekan baris item)/semua → seluruh item Siap → kolom Siap → staf mengonfirmasi sudah disajikan → Selesai.
 
 **Takeaway dengan KDS:** Lunas → Baru → Mulai Persiapan → seluruh item Siap → tunggu penyerahan → staf mencocokkan nomor pesanan → konfirmasi diserahkan → Selesai.
 
@@ -385,14 +396,14 @@ Jika masa trial/berbayar habis tanpa pembayaran lanjutan, pemilik memilih satu c
 | Keranjang | Sedang diisi → bayar atau buang | Tidak ada save/resume draft |
 | Percobaan QRIS | Pending → lunas terverifikasi/gagal/kedaluwarsa/penanganan status tidak pasti | Nilai tepat dan transisi provider divalidasi saat integrasi |
 | Pembayaran tunai/manual | Belum dikonfirmasi → lunas dikonfirmasi kasir | Jangan menyebut digital manual sebagai verifikasi otomatis provider |
-| Pesanan online dengan KDS | Lunas/Baru → Sedang Disiapkan → Siap → Selesai sesuai dine-in/takeaway | Pembayaran dan progres fulfillment adalah status berbeda |
+| Pesanan online dengan KDS | Lunas/Baru → Sedang Disiapkan → Siap → (dine-in) dikonfirmasi disajikan / (takeaway) diserahkan → Selesai | Pembayaran dan progres fulfillment adalah status berbeda |
 | Pesanan tanpa KDS | Lunas → Selesai | Tanpa tracking |
 | Pesanan tunai offline | Lunas/Selesai lokal → tersinkron | Sync status terpisah dari status pembayaran/fulfillment |
 | Produk | Tersedia ↔ Habis | Manual; bukan jumlah stok |
 | Meja | Terisi/Tersedia menurut pesanan terkait | Awal okupansi TBD; pelepasan setelah semua selesai sudah dikonfirmasi |
 | Paket bisnis | Free → trial/berbayar; trial/berbayar berakhir → transisi ke Free | State teknis transisi dan nama status bersifat usulan |
 
-Tidak ada status Served wajib untuk dine-in, alur refund aplikasi, atau On Hold replacement yang dibawa dari PRD lama.
+Tidak ada alur refund aplikasi atau On Hold replacement yang dibawa dari PRD lama.
 
 ## 5. Architecture
 
@@ -549,7 +560,7 @@ Ketersediaan tidak menjadi inventory ledger. Tidak ada tabel wajib ingredients, 
 | Entitas usulan | Kolom/relasi inti | Aturan penting |
 |---|---|---|
 | kitchen_jobs | order_id, branch_id, payment_sequence, status, started_by/at, ready_at | Unik per routing order; tidak ada priority_override |
-| item_readiness_events | order_item_id, actor_id, from_state, to_state, occurred_at | Kesiapan dapat diaudit; tidak menambah tahap Served |
+| item_readiness_events | order_item_id, actor_id, from_state, to_state, occurred_at | Kesiapan dapat diaudit; konfirmasi penyajian dicatat pada audit_events |
 | pickup_confirmations | order_id, matched_number, actor_id, handed_over_at | Unik efektif per takeaway yang diserahkan |
 | pickup_overrides | order_id, manager_id, reason, alternative_evidence_ref, authenticated_at | Hanya pengecualian nomor hilang; bukan izin refund |
 | registered_devices | id, business_id, branch_id, primary_offline_status, version, last_seen_at | Desain pemindahan kendali dan masa izin wajib diuji |
@@ -665,13 +676,13 @@ Detail pipeline/vendor, jadwal, change approval dan jumlah tenant pilot belum di
 1. **Keputusan penghambat ditutup:** Formula uang lengkap, titik tengah pembulatan, hak akses, provisioning staf, downgrade, perangkat offline dan gangguan digital memiliki aturan yang dapat diuji. TBD tidak dianggap lulus hanya karena telah dicantumkan.
 2. **Paket sesuai:** Free 1 cabang/1 staf; Berbayar 5 cabang/10 staf per cabang; satu staf satu peran/satu cabang; pemilik tidak dihitung pada kuota staf.
 3. **Alur pembayaran benar:** Tidak ada mixed/partial payment. QR meja wajib QRIS. Free hanya kasir tunai/manual. Berbayar kasir tunai/QRIS. Semua pembayaran sah sebelum proses dapur.
-4. **Routing sesuai kondisi:** KDS per cabang berdasarkan staf dapur; dine-in selesai ketika Siap; takeaway dengan KDS menunggu handover; tanpa KDS/offline tunai langsung selesai.
+4. **Routing sesuai kondisi:** KDS per cabang berdasarkan staf dapur; dine-in selesai setelah staf mengonfirmasi penyajian; takeaway dengan KDS menunggu handover; tanpa KDS/offline tunai langsung selesai.
 5. **Offline tidak menambah pekerjaan dapur:** Satu perangkat utama, tunai saja, save lokal terbukti, retry/import sekali dan laporan tidak menggandakan transaksi.
 6. **QRIS/provider sah:** Kelayakan merchant/cabang, kanal produksi, bukti pembayaran, expiry, late callback, settlement dan prosedur eksternal telah diverifikasi sebelum uang nyata.
 7. **Penagihan jujur:** Invoice dibayar pemilik dan diverifikasi otomatis; tidak ada autodebit terselubung atau mandat trial. Periode paket tidak bertambah ganda akibat replay.
-8. **Batas scope terlihat:** Tidak ada refund/replacement aplikasi, Served wajib, prioritas manual, stok otomatis, varian berbayar, struk pelanggan/thermal atau shift kas yang diklaim tersedia.
+8. **Batas scope terlihat:** Tidak ada refund/replacement aplikasi, prioritas manual, stok otomatis, varian berbayar, struk pelanggan/thermal atau shift kas yang diklaim tersedia.
 9. **Pemulihan dan keamanan:** Uji akses lintas tenant/cabang, backup/restore, redaksi log, pembatasan autentikasi serta penanganan perangkat hilang/kuota lokal selesai.
-10. **Penerimaan:** AC-01–AC-40 lulus pada lingkup yang akan dipasarkan, dengan bukti uji dan prosedur insiden yang relevan. Aplikasi lama yang lulus tes berbeda tidak menjadi bukti fitur baru ini sudah benar.
+10. **Penerimaan:** AC-01–AC-42 lulus pada lingkup yang akan dipasarkan, dengan bukti uji dan prosedur insiden yang relevan. Aplikasi lama yang lulus tes berbeda tidak menjadi bukti fitur baru ini sudah benar.
 
 ### 8.5 Monitoring, backup dan risiko penting
 
