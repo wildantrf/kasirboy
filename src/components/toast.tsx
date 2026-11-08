@@ -19,6 +19,7 @@ interface ToastItem {
 
 interface ToastContextValue {
   pushToast: (toast: { tone: ToastTone; title: string; message?: string }) => void;
+  clearToasts: () => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -41,7 +42,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     [remove],
   );
 
-  const value = useMemo<ToastContextValue>(() => ({ pushToast }), [pushToast]);
+  const clearToasts = useCallback(() => setToasts([]), []);
+
+  const value = useMemo<ToastContextValue>(() => ({ pushToast, clearToasts }), [pushToast, clearToasts]);
 
   return (
     <ToastContext.Provider value={value}>

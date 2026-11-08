@@ -1,343 +1,226 @@
-import { Link, Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAppState } from '../state/AppProvider';
-import { Badge, Card, CardHead, EmptyState, Note, Stat } from '../components/ui';
-import { FulfillmentBadge, Money, PaymentBadge } from '../components/domain';
-import { Icon } from '../components/icons';
-import { formatDateTime, formatLongDate, formatTime } from '../lib/format';
+import { can } from '../lib/permissions';
 import { entitlementsFor } from '../lib/entitlements';
-import { PLAN_LABEL } from '../lib/entitlements';
 import {
-  branchesOf,
-  productsOf,
+  activeOrdersOf,
+  branchById,
+  rangeFor,
   recentOrders,
   salesSummary,
-  rangeFor,
+  tableOccupancy,
 } from '../lib/selectors';
-import { useApp } from '../state/AppProvider';
+import { formatIDR, formatTime } from '../lib/format';
+import { Badge, Card, CardBody, CardHead, Empty, PageHead, Stat } from '../components/ui';
+import { Icon } from '../components/icons';
 
 export function DashboardPage() {
   const state = useAppState();
-  const { snapshot } = useApp();
   const session = state.session;
-
-  if (!session || !session.businessId) {
+  if (!session?.branchId) {
     return null;
   }
-  if (session.role === 'kitchen') {
-    return <Navigate to="/dapur" replace />;
-  }
-  if (session.role === 'cashier') {
-    return <Navigate to="/kasir" replace />;
-  }
-  if (session.role === 'waiter') {
-    return <Navigate to="/pesanan" replace />;
+
+  const branch = branchById(state, session.branchId);
+  if (!branch) {
+    return null;
   }
 
-  const business = state.businesses.find((item) => item.id === session.businessId);
-  const branch = state.branches.find((item) => item.id === session.branchId);
-  const subscription = state.subscriptions.find((item) => item.businessId === session.businessId);
+  const subscription = state.subscriptions.find((item) => item.businessId === branch.businessId);
   const entitlements = entitlementsFor(subscription);
-  const businessBranches = branchesOf(state, session.businessId);
-  const scope = session.role === 'owner' ? businessBranches : branch ? [branch] : [];
-  const scopeIds = scope.map((item) => item.id);
+  const { from, to } = rangeFor('today');
+  const today = salesSummary(state, [branch.id], from, to);
+  const week = salesSummary(state, [branch.id], ...Object.values(rangeFor('7d')) as [Date, Date]);
+  const open = activeOrdersOf(state, branch.id);
+  const occupancy = tableOccupancy(state, branch.id);
+  const tables = state.tables.filter((table) => table.branchId === branch.id);
+  const occupied = Object.values(occupancy).filter((entry) => entry.occupied).length;
+  const kitchenQueue = state.kitchenJobs.filter(
+    (job) => job.branchId === branch.id && job.status !== 'completed',
+  );
+  const recent = recentOrders(state, [branch.id], 6);
 
-  const today = rangeFor('today');
-  const week = rangeFor('7d');
-  const todaySummary = salesSummary(state, scopeIds, today.from, today.to);
-  const weekSummary = salesSummary(state, scopeIds, week.from, week.to);
-  const latest = recentOrders(state, scopeIds, 5);
-  const maxDay = Math.max(1, ...weekSummary.days.map((day) => day.total));
-
-  const activeJobs = state.kitchenJobs.filter(
-    (job) => scopeIds.includes(job.branchId) && job.status !== 'completed',
-  );
-  const awaitingHandover = state.orders.filter(
-    (order) =>
-      scopeIds.includes(order.branchId) &&
-      order.fulfillmentState === 'awaiting_handover',
-  );
-  const awaitingServed = state.orders.filter(
-    (order) =>
-      scopeIds.includes(order.branchId) &&
-      order.type === 'dine_in' &&
-      order.fulfillmentState === 'ready',
-  );
-  const pendingPayments = state.orders.filter(
-    (order) => scopeIds.includes(order.branchId) && order.paymentState === 'pending',
-  );
-  const soldOut = scope.flatMap((item) =>
-    productsOf(state, item.id).filter((product) => product.availability === 'sold_out'),
-  );
-  const queuedOffline = snapshot.offlineOrders.filter((record) => record.state === 'queued');
-  const branchName = (branchId: string) =>
-    state.branches.find((item) => item.id === branchId)?.name ?? 'Cabang';
-
-  const planDetail =
-    entitlements.state === 'trial'
-      ? `Trial berakhir ${subscription?.trialEndsAt ? formatDateTime(subscription.trialEndsAt) : '—'}`
-      : entitlements.state === 'active'
-        ? `Aktif sampai ${subscription?.validUntil ? formatDateTime(subscription.validUntil) : '—'}`
-        : 'Free permanen · 1 cabang · 1 staf';
+  const peak = Math.max(...week.days.map((day) => day.total), 1);
+  const openValue = open.reduce((sum, order) => sum + order.totals.finalTotal, 0);
 
   return (
-    <div className="stack">
-      <header className="page-head">
-        <div>
-          <p className="eyebrow">{formatLongDate(new Date().toISOString())}</p>
-          <h1 className="page-title">Ringkasan {business?.name}</h1>
-          <p className="page-lede">
-            {session.role === 'owner'
-              ? `Gabungan ${scope.length} cabang. Angka mengikuti transaksi yang sudah lunas dan tersinkron.`
-              : `${branch?.name}. Angka hanya mencakup cabang ini.`}
-          </p>
-        </div>
-        <div className="page-actions">
-          <Link to="/kasir" className="btn btn--secondary">
-            <Icon name="receipt" size={18} />
-            <span>Buka kasir</span>
-          </Link>
-          <Link to="/laporan" className="btn btn--primary">
-            <Icon name="chart" size={18} />
-            <span>Laporan</span>
-          </Link>
-        </div>
-      </header>
+    <div className="page">
+      <PageHead
+        title={branch.name}
+        subtitle={`Ringkasan hari ini · ${today.orderCount} transaksi lunas`}
+        actions={
+          can(session.role, 'pos.run') ? (
+            <Link to="/kasir" className="btn btn--primary">
+              <Icon name="receipt" size={17} />
+              <span>Buka kasir</span>
+            </Link>
+          ) : null
+        }
+      />
 
-      <section className="dash-hero" aria-label="Penjualan hari ini">
-        <div className="dash-hero__main">
-          <p className="eyebrow">Penjualan hari ini</p>
-          <p className="dash-hero__value money">
-            <Money value={todaySummary.totalSales} />
-          </p>
-          <p className="dash-hero__meta">
-            {todaySummary.orderCount} transaksi lunas · rata-rata{' '}
-            <Money value={todaySummary.averageTicket} /> per pesanan
-          </p>
-
-          <div className="spark" role="img" aria-label="Tren total penjualan tujuh hari terakhir">
-            {weekSummary.days.map((day) => (
-              <div className="spark__col" key={day.key}>
-                <span
-                  className="spark__bar"
-                  style={{ height: `${Math.max(6, Math.round((day.total / maxDay) * 100))}%` }}
-                  title={`${day.label}: ${day.total}`}
-                />
-                <span className="spark__label">{day.label.split(' ').slice(0, 2).join(' ')}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="dash-hero__side">
-          <div className="dash-hero__side-row">
-            <span className="eyebrow">Dapur aktif</span>
-            <strong className="money">{activeJobs.length} tiket</strong>
-          </div>
-          <div className="dash-hero__side-row">
-            <span className="eyebrow">Menunggu serah</span>
-            <strong className="money">{awaitingHandover.length} takeaway</strong>
-          </div>
-          <div className="dash-hero__side-row">
-            <span className="eyebrow">Siap disajikan</span>
-            <strong className="money">{awaitingServed.length} dine-in</strong>
-          </div>
-          <div className="dash-hero__side-row">
-            <span className="eyebrow">Menunggu QRIS</span>
-            <strong className="money">{pendingPayments.length} percobaan</strong>
-          </div>
-          <div className="dash-hero__side-row">
-            <span className="eyebrow">Antrean offline</span>
-            <strong className="money">{queuedOffline.length} transaksi</strong>
-          </div>
-          <Link to="/dapur" className="btn btn--ghost btn--sm">
-            Buka layar dapur
-            <Icon name="arrow-right" size={16} />
-          </Link>
-        </div>
-      </section>
-
-      <div className="stat-grid">
+      <div className="grid-3">
         <Stat
-          label="Transaksi hari ini"
-          value={todaySummary.orderCount}
-          meta={`${todaySummary.byMethod.cash > 0 ? 'Tunai & digital tercatat' : 'Belum ada transaksi tunai'}`}
+          label="Penjualan hari ini"
+          value={formatIDR(today.totalSales)}
+          foot={`${today.orderCount} pesanan · rata-rata ${formatIDR(today.averageTicket)}`}
+          accent
         />
         <Stat
-          label="Pajak terkumpul"
-          value={<Money value={todaySummary.tax} />}
-          meta="Pajak atas dasar setelah diskon"
-          tone="success"
+          label="Pesanan aktif"
+          value={open.length}
+          foot={`Nilai berjalan ${formatIDR(openValue)}`}
         />
         <Stat
-          label="Biaya layanan"
-          value={<Money value={todaySummary.service} />}
-          meta="Hanya sesuai penerapan tipe pesanan"
+          label="Antrean dapur"
+          value={kitchenQueue.length}
+          foot={kitchenQueue.length === 0 ? 'Dapur bersih' : 'Termasuk pesanan baru'}
         />
         <Stat
-          label="Pembulatan tunai"
-          value={<Money value={todaySummary.rounding} />}
-          meta="Selisih pembulatan, bukan pendapatan"
-          tone={todaySummary.rounding === 0 ? 'neutral' : 'warning'}
+          label="Meja terisi"
+          value={`${occupied}/${tables.length}`}
+          foot="Dilepas saat pesanan selesai"
         />
       </div>
 
-      {pendingPayments.length > 0 || soldOut.length > 0 || queuedOffline.length > 0 ? (
+      <div className="grid-2" style={{ gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)' }}>
         <Card>
           <CardHead
-            eyebrow="Perlu perhatian"
-            title="Hal yang menahan operasional"
-            description="Perubahan ini tidak mengubah transaksi lunas; hanya menandai pekerjaan yang belum selesai."
-          />
-          <ul className="attention-list">
-            {pendingPayments.map((order) => (
-              <li key={order.id}>
-                <Badge tone="warning">QRIS pending</Badge>
-                <span>
-                  {order.number} · {branchName(order.branchId)} ·{' '}
-                  <Money value={order.totals.finalTotal} />
-                </span>
-                <span className="muted small">Tidak dikirim ke dapur sebelum terverifikasi.</span>
-              </li>
-            ))}
-            {awaitingHandover.map((order) => (
-              <li key={order.id}>
-                <Badge tone="info">Menunggu serah</Badge>
-                <span>
-                  {order.number} · takeaway {branchName(order.branchId)}
-                </span>
-                <Link className="small" to="/dapur">
-                  Konfirmasi penyerahan
-                </Link>
-              </li>
-            ))}
-            {soldOut.map((product) => (
-              <li key={product.id}>
-                <Badge tone="danger">Habis</Badge>
-                <span>{product.name}</span>
-                <span className="muted small">{branchName(product.branchId)}</span>
-              </li>
-            ))}
-            {queuedOffline.length > 0 ? (
-              <li>
-                <Badge tone="warning">Belum tersinkron</Badge>
-                <span>{queuedOffline.length} transaksi tunai offline</span>
-                <span className="muted small">Belum masuk total cloud.</span>
-              </li>
-            ) : null}
-          </ul>
-        </Card>
-      ) : null}
-
-      <div className="dash-grid">
-        <Card>
-          <CardHead
-            title="Pesanan terbaru"
-            description="Semua metode dan status. Buka detail untuk melihat struk staf."
-            actions={
-              <Link to="/pesanan" className="btn btn--ghost btn--sm">
-                Semua pesanan
+            title="Tujuh hari terakhir"
+            action={
+              <Link to="/laporan" className="btn btn--ghost btn--sm">
+                Laporan <Icon name="arrowRight" size={14} />
               </Link>
             }
           />
-          {latest.length === 0 ? (
-            <EmptyState
-              title="Belum ada pesanan"
-              description="Transaksi pertama akan muncul di sini setelah pembayaran dikonfirmasi."
-              action={
-                <Link to="/kasir" className="btn btn--primary btn--sm">
-                  Buka kasir
-                </Link>
-              }
-            />
-          ) : (
-            <div className="table-scroll">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Nomor</th>
-                    <th scope="col">Cabang</th>
-                    <th scope="col">Bayar</th>
-                    <th scope="col">Status</th>
-                    <th scope="col" className="numeric">
-                      Total
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {latest.map((order) => (
-                    <tr key={order.id}>
-                      <td>
-                        <Link to={`/pesanan/${order.id}`} aria-label={`Buka pesanan ${order.number}`}>
-                          {order.number}
-                        </Link>
-                      </td>
-                      <td className="small">{branchName(order.branchId)}</td>
-                      <td>
-                        <PaymentBadge state={order.paymentState} />
-                      </td>
-                      <td>
-                        <FulfillmentBadge state={order.fulfillmentState} />
-                      </td>
-                      <td className="numeric">
-                        <Money value={order.totals.finalTotal} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <CardBody>
+            <div className="row" style={{ alignItems: 'baseline', gap: 'var(--s-3)', marginBottom: 'var(--s-4)' }}>
+              <strong className="num" style={{ fontSize: 'var(--t-2xl)' }}>
+                {formatIDR(week.totalSales)}
+              </strong>
+              <span className="muted" style={{ fontSize: 'var(--t-xs)' }}>
+                {week.orderCount} pesanan lunas
+              </span>
             </div>
-          )}
+            <div className="bars" role="img" aria-label="Penjualan harian tujuh hari terakhir">
+              {week.days.map((day) => (
+                <div
+                  key={day.key}
+                  className={`bars__bar ${day.total >= peak * 0.95 ? 'bars__bar--peak' : ''}`}
+                  style={{ height: `${Math.max(3, (day.total / peak) * 100)}%` }}
+                  title={`${day.label} · ${formatIDR(day.total)}`}
+                />
+              ))}
+            </div>
+            <div
+              className="row"
+              style={{ justifyContent: 'space-between', marginTop: 'var(--s-2)', fontSize: 'var(--t-2xs)' }}
+            >
+              <span className="faint">{week.days[0]?.label}</span>
+              <span className="faint">{week.days[week.days.length - 1]?.label}</span>
+            </div>
+          </CardBody>
         </Card>
 
-        <div className="stack">
-          <Card>
-            <CardHead title="Dapur sekarang" description="Urutan mengikuti pembayaran lunas." />
-            {activeJobs.length === 0 ? (
-              <EmptyState icon="flame" title="Tidak ada tiket aktif" description="KDS hanya menerima pesanan lunas." />
-            ) : (
-              <ul className="job-mini-list">
-                {activeJobs.slice(0, 4).map((job) => {
-                  const order = state.orders.find((item) => item.id === job.orderId);
-                  return (
-                    <li key={job.id}>
-                      <span className="job-mini-list__seq">{job.sequence}</span>
-                      <div>
-                        <strong className="money">{order?.number}</strong>
-                        <p className="muted small">
-                          {order?.type === 'takeaway' ? 'Takeaway' : order?.tableLabel ?? 'Dine-in'} ·{' '}
-                          {order ? formatTime(order.paidAt ?? order.createdAt) : ''}
-                        </p>
-                      </div>
-                      <Badge tone={job.status === 'new' ? 'neutral' : job.status === 'preparing' ? 'warning' : 'info'}>
-                        {job.status === 'new' ? 'Baru' : job.status === 'preparing' ? 'Disiapkan' : 'Siap'}
-                      </Badge>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </Card>
-
-          <Card className="card--tint">
-            <CardHead eyebrow="Paket" title={PLAN_LABEL[entitlements.plan]} />
-            <p className="small muted">{planDetail}</p>
-            <div className="inline" style={{ marginTop: 12 }}>
-              <Link to="/langganan" className="btn btn--secondary btn--sm">
-                Kelola paket
-              </Link>
-              <Link to="/pengaturan" className="btn btn--ghost btn--sm">
-                Pengaturan cabang
-              </Link>
-            </div>
-          </Card>
-
-          {entitlements.needsDowngradeSelection ? (
-            <Note tone="warning" title="Transisi paket belum selesai">
-              Pilih satu cabang dan satu staf pada halaman Langganan. Data lain tetap tersimpan.
-            </Note>
-          ) : null}
-        </div>
+        <Card>
+          <CardHead title="Metode pembayaran" />
+          <CardBody className="stack">
+            {(
+              [
+                ['qris', 'QRIS'],
+                ['cash', 'Tunai'],
+                ['manual_digital', 'Digital manual'],
+              ] as const
+            ).map(([key, label]) => {
+              const amount = week.byMethod[key];
+              const share = week.totalSales > 0 ? amount / week.totalSales : 0;
+              return (
+                <div key={key} className="stack" style={{ gap: 4 }}>
+                  <div className="row" style={{ justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 'var(--t-sm)' }}>{label}</span>
+                    <span className="num" style={{ fontSize: 'var(--t-sm)' }}>
+                      {formatIDR(amount)}
+                    </span>
+                  </div>
+                  <div style={{ height: 5, background: 'var(--ink-08)', borderRadius: 3 }}>
+                    <div
+                      style={{
+                        width: `${share * 100}%`,
+                        height: '100%',
+                        background: key === 'qris' ? 'var(--signal)' : 'var(--ink)',
+                        borderRadius: 3,
+                        transition: 'width var(--dur) var(--ease)',
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+            <p className="faint" style={{ fontSize: 'var(--t-xs)', marginTop: 'var(--s-2)' }}>
+              {entitlements.qrisSelfOrder
+                ? 'QRIS terintegrasi aktif untuk cabang ini.'
+                : 'QRIS terintegrasi belum aktif pada paket ini.'}
+            </p>
+          </CardBody>
+        </Card>
       </div>
+
+      <Card flush>
+        <CardHead
+          title="Pesanan terbaru"
+          action={
+            <Link to="/pesanan" className="btn btn--ghost btn--sm">
+              Semua pesanan <Icon name="arrowRight" size={14} />
+            </Link>
+          }
+        />
+        {recent.length === 0 ? (
+          <Empty
+            title="Belum ada pesanan"
+            text="Pesanan yang dibayar lewat kasir atau QR meja akan muncul di sini."
+            icon="receipt"
+          />
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Nomor</th>
+                <th>Jenis</th>
+                <th>Waktu</th>
+                <th>Status</th>
+                <th style={{ textAlign: 'right' }}>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recent.map((order) => (
+                <tr key={order.id}>
+                  <td>
+                    <Link to={`/pesanan/${order.id}`} className="num strong" style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                      {order.number}
+                    </Link>
+                  </td>
+                  <td className="muted">
+                    {order.type === 'dine_in' ? order.tableLabel ?? 'Dine-in' : 'Takeaway'}
+                    {order.source === 'qr_table' ? ' · QR' : ''}
+                  </td>
+                  <td className="num faint" style={{ fontSize: 'var(--t-xs)' }}>
+                    {formatTime(order.paidAt ?? order.createdAt)}
+                  </td>
+                  <td>
+                    {order.paymentState === 'pending' ? (
+                      <Badge tone="signal">Menunggu bayar</Badge>
+                    ) : order.fulfillmentState === 'completed' ? (
+                      <Badge tone="outline">Selesai</Badge>
+                    ) : (
+                      <Badge>Siap disiapkan</Badge>
+                    )}
+                  </td>
+                  <td className="table__num">{formatIDR(order.totals.finalTotal)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Card>
     </div>
   );
 }

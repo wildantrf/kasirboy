@@ -5,19 +5,10 @@ import { App } from './App';
 import { AppProvider } from './state/AppProvider';
 import { ToastProvider } from './components/toast';
 
-import './styles/tokens.css';
-import './styles/base.css';
-import './styles/components.css';
-import './styles/app.css';
-import './styles/pages.css';
+import './styles/theme.css';
+import './styles/screens.css';
 
-const rootElement = document.getElementById('root');
-
-if (!rootElement) {
-  throw new Error('Elemen #root tidak ditemukan');
-}
-
-createRoot(rootElement).render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <AppProvider>

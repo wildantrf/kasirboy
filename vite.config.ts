@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
 
 // MejaFlow frontend. Build output is a static bundle suitable for HTTPS static hosting.
 export default defineConfig({

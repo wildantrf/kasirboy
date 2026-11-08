@@ -1,0 +1,1395 @@
+/* ============================================================
+   MejaFlow — screen styles. Ink / paper / signal only.
+   ============================================================ */
+
+/* ------------------------------------------------------------------- Auth */
+
+.auth {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+@media (max-width: 900px) {
+  .auth {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.auth__aside {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--s-7);
+  padding: var(--s-6) var(--s-7);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+@media (max-width: 900px) {
+  .auth__aside {
+    display: none;
+  }
+}
+
+.auth__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.auth__claim {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  max-width: 32ch;
+}
+
+.auth__claim h2 {
+  font-family: var(--font-display);
+  font-size: var(--t-4xl);
+  line-height: 1.02;
+}
+
+.auth__claim h2 em {
+  font-style: italic;
+  color: var(--ink-40);
+}
+
+.auth__claim p {
+  font-size: var(--t-sm);
+  line-height: 1.65;
+  color: var(--ink-25);
+}
+
+.auth__points {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding-top: var(--s-5);
+  border-top: 1px solid rgb(247 244 236 / 0.14);
+}
+
+.auth__point {
+  display: flex;
+  gap: var(--s-3);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+  color: var(--ink-25);
+}
+
+.auth__point b {
+  color: var(--paper);
+  font-weight: 600;
+}
+
+.auth__index {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-2xs);
+  color: var(--ink-40);
+  padding-top: 3px;
+}
+
+.auth__main {
+  display: grid;
+  place-items: center;
+  padding: var(--s-7) var(--s-5);
+}
+
+.auth__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  width: 100%;
+  max-width: 380px;
+}
+
+.auth__head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth__head h1 {
+  font-family: var(--font-display);
+  font-size: var(--t-3xl);
+}
+
+.auth__head p {
+  font-size: var(--t-sm);
+  color: var(--text-muted);
+}
+
+.auth__foot {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.auth__foot a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.auth__demo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  background: var(--ink-04);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+
+.auth__demo-label {
+  font-size: var(--t-2xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.auth__demo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.auth__demo-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  width: 100%;
+  padding: 5px 6px;
+  border: 0;
+  border-radius: var(--r-xs);
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: var(--t-xs);
+}
+
+.auth__demo-item:hover {
+  background: var(--ink-08);
+}
+
+.auth__demo-item strong {
+  font-weight: 600;
+}
+
+.auth__demo-item span {
+  margin-left: auto;
+  color: var(--text-muted);
+}
+
+/* -------------------------------------------------------------------- POS */
+
+.pos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 358px;
+  gap: var(--s-4);
+  align-items: start;
+}
+
+@media (max-width: 1023px) {
+  .pos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.pos__catalog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+}
+
+.pos__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex: none;
+  padding: 5px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.chip:hover {
+  border-color: var(--ink-40);
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.seg {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--ink-08);
+  border-radius: var(--r-sm);
+}
+
+.seg__btn {
+  padding: 5px 12px;
+  border: 0;
+  border-radius: var(--r-xs);
+  background: none;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--ink-70);
+  cursor: pointer;
+}
+
+.seg__btn[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgb(23 21 15 / 0.08);
+}
+
+/* Payment-method buttons in the cart footer span the full width. */
+.cart__foot .seg {
+  display: flex;
+  width: 100%;
+}
+
+.cart__foot .seg__btn {
+  flex: 1;
+}
+
+.products {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--s-3);
+}
+
+/* When the cart stacks below the menu (narrow viewport), the menu must be a
+   single column — never a multi-column grid with the summary underneath. */
+@media (max-width: 1023px) {
+  .products {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---- Category management list ------------------------------------------- */
+
+.catlist {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.catlist__row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-bottom: 1px solid var(--line);
+  min-height: 44px;
+}
+
+.catlist__row:last-child {
+  border-bottom: 0;
+}
+
+/* The row number is decorative — the move buttons are what actually reorder. */
+.catlist__order {
+  width: 18px;
+  flex: none;
+  text-align: right;
+  font-size: var(--t-2xs);
+  color: var(--text-muted);
+}
+
+.catlist__name {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.catlist__count {
+  font-size: var(--t-2xs);
+  color: var(--text-muted);
+  flex: none;
+}
+
+.catlist__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+
+/* 30px is below the 44px touch guideline, and this screen is used on tablets
+   behind a counter. Grow the hit area without changing the visual weight. */
+.catlist__actions .btn--icon {
+  min-width: 38px;
+  min-height: 38px;
+}
+
+@media (pointer: coarse) {
+  .catlist__actions .btn--icon {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* ---- Category dividers in the menu grid --------------------------------- */
+
+.menu-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.menu-group__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding-bottom: var(--s-1);
+}
+
+/* Same treatment as the QR menu section labels: small, tracked, uppercase.
+   The rule is what makes it read as a divider rather than a second heading. */
+.menu-group__title {
+  font-size: var(--t-2xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  flex: none;
+}
+
+.menu-group__rule {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.menu-group__count {
+  font-size: var(--t-2xs);
+  color: var(--text-muted);
+  flex: none;
+}
+
+.menu-group__empty {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  padding: var(--s-3);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-md);
+}
+
+/* ---- Photo picker ------------------------------------------------------- */
+
+.photo-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.photo-picker__preview {
+  width: 76px;
+  height: 76px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--ink-04);
+  color: var(--ink-25);
+  overflow: hidden;
+}
+
+.photo-picker__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-picker__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.product {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  overflow: hidden;
+  transition: border-color var(--dur) var(--ease);
+}
+
+.product:hover {
+  border-color: var(--line-strong);
+}
+
+.product__photo {
+  position: relative;
+  grid-row: 1 / -1;
+  background: var(--ink-04);
+}
+
+.product__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product__photo-fallback {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--ink-25);
+}
+
+.product__flag {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+}
+
+.product__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s-3) var(--s-3) 0;
+}
+
+.product__name {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.product__desc {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3) var(--s-3);
+  margin-top: auto;
+}
+
+.product__price {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  padding: 2px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+}
+
+.stepper__btn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  color: var(--ink-70);
+  flex: none;
+}
+
+.stepper__btn:hover {
+  background: var(--ink-08);
+  color: var(--ink);
+}
+
+.stepper__btn--add {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.stepper__btn--add:hover {
+  background: var(--signal);
+  color: var(--on-accent);
+}
+
+.stepper__qty {
+  min-width: 20px;
+  text-align: center;
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-xs);
+  font-weight: 600;
+}
+
+/* Cart */
+
+.cart {
+  position: sticky;
+  top: calc(var(--s-6) + 44px);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 120px);
+}
+
+.cart__lines {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  min-height: 80px;
+}
+
+.cart__line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.cart__line:last-child {
+  border-bottom: 0;
+}
+
+.cart__name {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  min-width: 0;
+}
+
+.cart__row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  grid-column: 1 / -1;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.cart__amount {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+
+.cart__foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  border-top: 1px solid var(--line);
+  background: var(--ink-04);
+}
+
+.totals {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.totals__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  font-size: var(--t-sm);
+  color: var(--text-soft);
+}
+
+.totals__row span:last-child {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums;
+}
+
+.totals__row--total {
+  margin-top: var(--s-2);
+  padding-top: var(--s-2);
+  border-top: 1px dashed var(--line-strong);
+  font-size: var(--t-md);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.totals__row--total span:last-child {
+  font-family: var(--font-display);
+  font-size: var(--t-2xl);
+  letter-spacing: -0.02em;
+}
+
+.cartbar {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 45;
+  display: none;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4) calc(var(--s-3) + env(safe-area-inset-bottom));
+  background: var(--ink);
+  color: var(--paper);
+}
+
+@media (max-width: 1023px) {
+  .cartbar {
+    display: flex;
+  }
+}
+
+.cartbar__meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.cartbar__meta span {
+  font-size: var(--t-2xs);
+  color: var(--ink-40);
+}
+
+.cartbar__meta strong {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-md);
+}
+
+.pb-cart {
+  padding-bottom: 84px;
+}
+
+@media (min-width: 1024px) {
+  .pb-cart {
+    padding-bottom: var(--s-9);
+  }
+}
+
+/* -------------------------------------------------------------------- KDS */
+
+.kds {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-3);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .kds {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.kds__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  background: var(--ink-04);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  min-height: 160px;
+}
+
+.kds__col-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding-bottom: var(--s-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.kds__col-title {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.kds__col-count {
+  margin-left: auto;
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+}
+
+.kds__col--live .kds__col-title {
+  color: var(--signal-deep);
+}
+
+.ticket {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+
+.ticket--live {
+  border-left: 3px solid var(--signal);
+}
+
+.ticket__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+}
+
+.ticket__table {
+  font-family: var(--font-display);
+  font-size: var(--t-2xl);
+  line-height: 1;
+}
+
+.ticket__meta {
+  margin-left: auto;
+  text-align: right;
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-2xs);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.ticket__items {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ticket__item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  width: calc(100% + 12px);
+  padding: 7px 6px;
+  margin: 0 -6px;
+  border: 0;
+  border-radius: var(--r-xs);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: var(--t-md);
+  line-height: 1.3;
+}
+
+.ticket__item:hover:not(:disabled) {
+  background: var(--ink-04);
+}
+
+.ticket__item:disabled {
+  cursor: default;
+}
+
+.ticket__item[data-ready='true'] {
+  color: var(--ink-40);
+  text-decoration: line-through;
+}
+
+.ticket__qty {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  min-width: 22px;
+}
+
+.ticket__note {
+  display: block;
+  font-size: var(--t-xs);
+  color: var(--signal-deep);
+  font-style: italic;
+}
+
+.ticket__foot {
+  display: flex;
+  gap: var(--s-2);
+}
+
+/* --------------------------------------------------------------------- QR */
+
+.qr {
+  /* Resolved at runtime from the real height of `.qr__bar`. */
+  --qr-bar-h: 56px;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 0 0 var(--s-9);
+}
+
+.qr__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.qr__brand {
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  line-height: 1;
+}
+
+.qr__table {
+  margin-left: auto;
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+}
+
+.qr__hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-4) var(--s-5);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.qr__hero h1 {
+  font-family: var(--font-display);
+  /* One family for the app means size no longer carries hierarchy alone;
+     weight and tighter tracking have to do the work the serif used to. */
+  font-weight: 600;
+  font-size: clamp(1.5rem, 5.4vw, 2rem);
+  line-height: 1.06;
+  letter-spacing: -0.022em;
+  max-width: 22ch;
+  text-wrap: balance;
+}
+
+.qr__hero-meta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-2xs);
+  color: var(--ink-40);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.qr__hero-tax {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-xs);
+  color: var(--ink-25);
+}
+
+.qr__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-4);
+}
+
+.qr__sticky {
+  position: sticky;
+  /* Sits directly under `.qr__bar` — never hard-code this, the bar's
+     height changes with the brand line at each breakpoint. */
+  top: var(--qr-bar-h);
+  z-index: 20;
+  padding: var(--s-2) var(--s-4) 10px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.qr__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  scroll-margin-top: calc(var(--qr-bar-h) + 56px);
+}
+
+.qr__section-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+}
+
+/* Category labels used to be distinguished from item names by typeface alone.
+   With a single family they must differ by scale and colour instead: smaller,
+   quieter, widely tracked caps. Item names stay --t-sm / 600. */
+.qr__section-head h2 {
+  font-family: var(--font-ui);
+  font-size: var(--t-2xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.qr__rule {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.qr__count {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-2xs);
+  /* --text-faint measured 2.47:1 here; the count needs to be readable. */
+  color: var(--text-muted);
+}
+
+.qr-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.qr-row__photo {
+  width: 62px;
+  height: 62px;
+  flex: none;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--ink-04);
+  border: 0;
+  padding: 0;
+  cursor: zoom-in;
+}
+
+.qr-row__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.qr-row__fallback {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--ink-25);
+  cursor: default;
+}
+
+.qr-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.qr-row__main:disabled {
+  cursor: not-allowed;
+}
+
+.qr-row__name {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.qr-row__desc {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qr-row__price {
+  margin-top: 2px;
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+
+.qr__cartbar {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4) calc(var(--s-3) + env(safe-area-inset-bottom));
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 0 -12px 28px -20px rgb(23 21 15 / 0.6);
+}
+
+.qr__cartbar .btn--primary {
+  margin-left: auto;
+  min-width: 104px;
+}
+
+/* Order tracker */
+
+.track {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  width: 100%;
+  max-width: 34rem;
+  margin-inline: auto;
+  padding: var(--s-4);
+}
+
+.track__ticket {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-5);
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--r-md);
+}
+
+.track__number {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-3xl);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.track__label {
+  font-size: var(--t-2xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+}
+
+.track__meta {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-2xs);
+  color: var(--ink-40);
+  margin-top: 4px;
+}
+
+.track__steps {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--s-2);
+  padding: var(--s-2) 0 var(--s-2);
+}
+
+/* Rail runs the full width behind the dots, inset by half a column so it
+   starts at the first dot's centre and ends at the last one's. */
+.track__rail {
+  position: absolute;
+  top: 18px;
+  left: 12.5%;
+  right: 12.5%;
+  height: 1px;
+  background: var(--line-strong);
+}
+
+/* Progress overlay: same geometry as the rail, width driven by `current`
+   so the travelled portion reads at full ink strength. */
+.track__progress {
+  position: absolute;
+  top: 18px;
+  left: 12.5%;
+  height: 1px;
+  background: var(--ink);
+}
+
+.track__step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  text-align: center;
+  min-width: 0;
+}
+
+.track__dot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.track__dot--done {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.track__dot--active {
+  border-color: var(--signal);
+  border-width: 2px;
+}
+
+.track__dot--active::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--signal);
+}
+
+.track__step-label {
+  font-size: var(--t-xs);
+  line-height: 1.25;
+  color: var(--text-muted);
+  text-wrap: balance;
+}
+
+.track__step-label--on {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.track__lines {
+  display: flex;
+  flex-direction: column;
+}
+
+.track__line {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--s-2);
+  align-items: baseline;
+  padding: 9px var(--s-4);
+  border-bottom: 1px dashed var(--line);
+  font-size: var(--t-sm);
+}
+
+.track__line:last-child {
+  border-bottom: 0;
+}
+
+/* Paid summary block — lives inside a `.card--flush`, so it carries
+   its own padding rather than inheriting `padding: 0`. */
+.track__paid {
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  border-top: 1px solid var(--line);
+}
+
+.track__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.track__total-label {
+  font-size: var(--t-sm);
+}
+
+.track__total-value {
+  font-size: var(--t-xl);
+  font-weight: 600;
+  line-height: 1.1;
+  text-align: right;
+  min-width: 0;
+}
+
+.track__paid-meta {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.track__paid-meta > .faint {
+  font-size: var(--t-xs);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* QR summary */
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4);
+}
+
+.summary__line {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: var(--s-3);
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--line);
+  align-items: start;
+}
+
+.summary__line:last-child {
+  border-bottom: 0;
+}
+
+.summary__thumb {
+  width: 54px;
+  height: 54px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--ink-04);
+  flex: 0 0 auto;
+  align-self: start;
+}
+
+.summary__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.summary__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+/* Name row: name left, price pinned right. The note sits below it,
+   full width of the column. */
+.summary__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.summary__top > .num {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.summary__note {
+  display: block;
+  box-sizing: border-box;
+  font-size: var(--t-xs);
+  line-height: 1.4;
+  padding: 4px 8px;
+  min-width: 0;
+  min-height: 0;
+  height: 26px;
+  width: 100%;
+  max-width: 100%;
+  flex: 0 0 auto;
+}
+
+/* The global .stepper uses margin-left:auto for the menu row.
+   In the summary it must sit left, under the note. */
+.summary__info > .stepper {
+  margin-left: 0;
+  align-self: flex-start;
+}
+
+/* QRIS attempt */
+
+.qris {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-6) var(--s-4);
+  text-align: center;
+}
+
+.qris__amount {
+  font-family: var(--font-display);
+  font-size: var(--t-4xl);
+  /* Inherited 400 looked like body copy at 40px once the serif was removed.
+     This is the most important figure on the screen. */
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.qris__frame {
+  padding: var(--s-3);
+  background: var(--paper-pure);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.qris__note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  background: var(--signal-06);
+  border: 1px solid var(--signal-12);
+  border-radius: var(--r-sm);
+  text-align: left;
+  font-size: var(--t-xs);
+  line-height: 1.5;
+  color: var(--signal-deep);
+}
