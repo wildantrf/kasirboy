@@ -93,6 +93,18 @@ src/
 
 Arsitektur mengikuti kandidat PRD: **TypeScript + React + Vite**. Tidak ada framework UI eksternal; sistem komponen dan token ditulis sendiri agar tampilan tidak bergantung pada default library.
 
+## Backend Supabase (fondasi awal)
+
+Backend awal berada di `supabase/migrations/20261109000000_initial_backend.sql`. Migrasi ini membuat tabel tenant, cabang, staf, katalog, meja, pesanan, pembayaran, KDS, dan audit; mengaktifkan RLS; serta menyediakan RPC atomik untuk membuat bisnis dan cabang pertama. Browser tidak diberi izin menulis status pesanan atau pembayaran secara langsung.
+
+1. Buat proyek Supabase dan salin `.env.example` menjadi `.env.local`.
+2. Isi `VITE_SUPABASE_URL` dan `VITE_SUPABASE_PUBLISHABLE_KEY` dari pengaturan proyek. Publishable key boleh berada di frontend; jangan pernah menaruh `service_role` key di `VITE_*` atau bundle browser.
+3. Pasang Supabase CLI, lalu jalankan `npx supabase login` dan `npx supabase link --project-ref <project-ref>`.
+4. Tinjau migrasi, kemudian jalankan `npx supabase db push` untuk menerapkannya ke proyek yang sudah ditautkan.
+5. Jalankan `npm install` dan `npm run dev`.
+
+`src/lib/backendAuth.ts` menyediakan helper Supabase untuk daftar/masuk email dan onboarding bisnis. **Halaman aplikasi masih menggunakan demo store**; helper belum menggantikan alur UI. Tulis checkout server-side, verifikasi webhook QRIS, provisioning staf, dan sinkronisasi offline belum dibuat. Jangan gunakan migrasi ini untuk transaksi atau data pelanggan produksi sebelum bagian tersebut dan tes RLS selesai.
+
 ## Deploy ke Vercel
 
 Ini adalah SPA statis (Vite). Vercel hanya menyediakan Node **26.x**, **24.x**, dan **22.x**; Node 18 sudah discontinued sehingga build gagal dengan pesan `Found invalid or discontinued Node.js Version: "18.x"`.
