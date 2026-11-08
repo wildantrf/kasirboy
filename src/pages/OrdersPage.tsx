@@ -5,6 +5,7 @@ import { Badge, EmptyState, Note, Tabs, Card } from '../components/ui';
 import { Icon } from '../components/icons';
 import { FulfillmentBadge, Money, OrderNumber, PaymentBadge } from '../components/domain';
 import { formatTime } from '../lib/format';
+import { can } from '../lib/permissions';
 
 type Filter = 'all' | 'active' | 'pending' | 'completed';
 
@@ -66,6 +67,28 @@ export function OrdersPage() {
 
   if (!session) {
     return null;
+  }
+
+  const canViewHistory =
+    can(session.role, 'pos.run') ||
+    can(session.role, 'handover.confirm') ||
+    can(session.role, 'reports.view');
+
+  if (!canViewHistory) {
+    return (
+      <Card>
+        <EmptyState
+          icon="lock"
+          title="Riwayat tidak tersedia untuk peran ini"
+          description="Layar dapur tidak menampilkan nilai pesanan atau riwayat transaksi. Gunakan KDS untuk pekerjaan dapur."
+          action={
+            <Link to="/dapur" className="btn btn--primary btn--sm">
+              Buka KDS
+            </Link>
+          }
+        />
+      </Card>
+    );
   }
 
   return (

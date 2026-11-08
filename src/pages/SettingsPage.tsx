@@ -28,6 +28,7 @@ const AUDIT_LABEL: Record<AuditAction, string> = {
   'staff.created': 'Staf',
   'staff.deactivated': 'Staf',
   'pickup.override': 'Pickup override',
+  'served.confirmed': 'Penyajian',
   'plan.trial_activated': 'Trial',
   'plan.invoice_paid': 'Tagihan',
   'plan.downgraded': 'Paket',

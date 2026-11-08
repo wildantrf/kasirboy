@@ -56,6 +56,12 @@ export function DashboardPage() {
       scopeIds.includes(order.branchId) &&
       order.fulfillmentState === 'awaiting_handover',
   );
+  const awaitingServed = state.orders.filter(
+    (order) =>
+      scopeIds.includes(order.branchId) &&
+      order.type === 'dine_in' &&
+      order.fulfillmentState === 'ready',
+  );
   const pendingPayments = state.orders.filter(
     (order) => scopeIds.includes(order.branchId) && order.paymentState === 'pending',
   );
@@ -130,6 +136,10 @@ export function DashboardPage() {
           <div className="dash-hero__side-row">
             <span className="eyebrow">Menunggu serah</span>
             <strong className="money">{awaitingHandover.length} takeaway</strong>
+          </div>
+          <div className="dash-hero__side-row">
+            <span className="eyebrow">Siap disajikan</span>
+            <strong className="money">{awaitingServed.length} dine-in</strong>
           </div>
           <div className="dash-hero__side-row">
             <span className="eyebrow">Menunggu QRIS</span>

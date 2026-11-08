@@ -4,7 +4,6 @@ import { useApp, useAppState } from '../state/AppProvider';
 import { useToast } from '../components/toast';
 import { Badge, Button, Card, CardHead, EmptyState, Modal, Note, TextInput } from '../components/ui';
 import { Icon } from '../components/icons';
-import { Money } from '../components/domain';
 import { branchHasKitchenStaff, staffOf } from '../lib/selectors';
 import { can } from '../lib/permissions';
 import { describeError } from '../lib/errors';
@@ -56,6 +55,7 @@ export function KitchenPage() {
   );
   const kitchenEnabled = branchHasKitchenStaff(state, branch.id);
   const canStart = session.role === 'kitchen' || session.role === 'owner';
+  const canServe = can(session.role, 'served.confirm');
   const canOverride = can(session.role, 'pickup.override');
 
   const tickets: Ticket[] = state.kitchenJobs
@@ -85,7 +85,7 @@ export function KitchenPage() {
     {
       id: 'ready' as const,
       title: 'Siap',
-      hint: 'Takeaway menunggu serah',
+      hint: 'Dine-in menunggu disajikan · takeaway menunggu serah',
       tickets: activeTickets.filter((ticket) => ticket.job.status === 'ready'),
     },
   ];
@@ -122,6 +122,23 @@ export function KitchenPage() {
       pushToast({ tone: 'success', title: `${order.number} diserahkan` });
     } catch (error) {
       pushToast({ tone: 'error', title: 'Nomor belum cocok', message: describeError(error) });
+    }
+  }
+
+  function handleServed(order: Order) {
+    try {
+      actions.confirmServed(order.id);
+      pushToast({
+        tone: 'success',
+        title: `${order.number} sudah disajikan`,
+        message: 'Pesanan selesai setelah konfirmasi staf.',
+      });
+    } catch (error) {
+      pushToast({
+        tone: 'error',
+        title: 'Penyajian belum dikonfirmasi',
+        message: describeError(error),
+      });
     }
   }
 
@@ -206,6 +223,8 @@ export function KitchenPage() {
                     {column.tickets.map(({ job, order }) => {
                       const isTakeaway = order.type === 'takeaway';
                       const waitingForHandover = order.fulfillmentState === 'awaiting_handover';
+                      const waitingForServed =
+                        order.fulfillmentState === 'ready' && order.type === 'dine_in';
                       return (
                         <article
                           className={`kds-ticket ${waitingForHandover ? 'kds-ticket--handover' : ''}`}
@@ -214,37 +233,52 @@ export function KitchenPage() {
                           <header className="kds-ticket__head">
                             <div>
                               <p className="kds-ticket__seq">#{job.sequence}</p>
-                              <h3 className="money">{order.number}</h3>
-                              <p className="small muted">
-                                {isTakeaway ? 'Takeaway' : order.tableLabel ?? 'Dine-in'} ·{' '}
-                                {order.paidAt ? relativeTime(order.paidAt) : formatTime(order.createdAt)}
+                              <h3 className="kds-ticket__table">
+                                {isTakeaway ? 'Takeaway' : order.tableLabel ?? 'Dine-in'}
+                              </h3>
+                              <p className="kds-ticket__meta">
+                                <span className="kds-ticket__order money">{order.number}</span>
+                                <span>
+                                  ·{' '}
+                                  {order.paidAt ? relativeTime(order.paidAt) : formatTime(order.createdAt)}
+                                </span>
                               </p>
                             </div>
-                            <div className="kds-ticket__right">
-                              <Badge tone={isTakeaway ? 'info' : 'neutral'}>
-                                {isTakeaway ? 'Takeaway' : 'Dine-in'}
-                              </Badge>
-                              <Money value={order.totals.finalTotal} />
-                            </div>
+                            {!isTakeaway ? (
+                              <div className="kds-ticket__right">
+                                <Badge tone="neutral">Dine-in</Badge>
+                              </div>
+                            ) : null}
                           </header>
 
                           <ul className="kds-items">
                             {order.items.map((item) => (
-                              <li key={item.id} className={item.ready ? 'is-ready' : ''}>
+                              <li key={item.id}>
                                 <button
                                   type="button"
-                                  className={`kds-item-check ${item.ready ? 'is-ready' : ''}`}
+                                  className={`kds-item ${item.ready ? 'is-ready' : ''}`}
                                   onClick={() => handleItem(order.id, item.id)}
                                   disabled={job.status !== 'preparing' || !canStart || item.ready}
-                                  aria-label={`Tandai ${item.name} siap`}
+                                  aria-label={
+                                    item.ready
+                                      ? `${item.name} sudah siap`
+                                      : `Tandai ${item.name} siap`
+                                  }
                                 >
-                                  {item.ready ? <Icon name="check" size={14} /> : item.quantity}
+                                  <span
+                                    className={`kds-item-check ${item.ready ? 'is-ready' : ''}`}
+                                    aria-hidden="true"
+                                  >
+                                    {item.ready ? <Icon name="check" size={15} /> : item.quantity}
+                                  </span>
+                                  <span className="kds-item__body">
+                                    <strong>{item.name}</strong>
+                                    {item.note ? (
+                                      <span className="kds-item__note">“{item.note}”</span>
+                                    ) : null}
+                                  </span>
+                                  <span className="kds-item__qty money">{item.quantity}×</span>
                                 </button>
-                                <div className="kds-item__body">
-                                  <strong>{item.name}</strong>
-                                  {item.note ? <p className="kds-item__note">“{item.note}”</p> : null}
-                                </div>
-                                <span className="kds-item__qty money">{item.quantity}×</span>
                               </li>
                             ))}
                           </ul>
@@ -271,40 +305,56 @@ export function KitchenPage() {
                             ) : null}
 
                             {waitingForHandover ? (
-                              <div className="kds-handover">
-                                <div className="kds-handover__row">
-                                  <TextInput
-                                    placeholder="Cocokkan nomor"
-                                    aria-label={`Nomor pesanan ${order.number}`}
-                                    value={handover[order.id] ?? ''}
-                                    onChange={(event) =>
-                                      setHandover((current) => ({ ...current, [order.id]: event.target.value }))
-                                    }
-                                    className="input--compact"
-                                  />
-                                  <Button size="sm" variant="primary" onClick={() => handleHandover(order)}>
-                                    Serahkan
-                                  </Button>
+                              can(session.role, 'handover.confirm') ? (
+                                <div className="kds-handover">
+                                  <div className="kds-handover__row">
+                                    <TextInput
+                                      placeholder="Cocokkan nomor"
+                                      aria-label={`Nomor pesanan ${order.number}`}
+                                      value={handover[order.id] ?? ''}
+                                      onChange={(event) =>
+                                        setHandover((current) => ({ ...current, [order.id]: event.target.value }))
+                                      }
+                                      className="input--compact"
+                                    />
+                                    <Button size="sm" variant="primary" onClick={() => handleHandover(order)}>
+                                      Serahkan
+                                    </Button>
+                                  </div>
+                                  {canOverride ? (
+                                    <Button
+                                      size="sm"
+                                      variant="quiet"
+                                      onClick={() => {
+                                        setOverrideOrderId(order.id);
+                                        setReason('');
+                                        setEvidence('');
+                                        setOverrideError(null);
+                                      }}
+                                    >
+                                      Nomor hilang?
+                                    </Button>
+                                  ) : null}
                                 </div>
-                                {canOverride ? (
-                                  <Button
-                                    size="sm"
-                                    variant="quiet"
-                                    onClick={() => {
-                                      setOverrideOrderId(order.id);
-                                      setReason('');
-                                      setEvidence('');
-                                      setOverrideError(null);
-                                    }}
-                                  >
-                                    Nomor hilang?
-                                  </Button>
-                                ) : null}
-                              </div>
+                              ) : (
+                                <p className="small muted">Penyerahan dikonfirmasi kasir atau pelayan.</p>
+                              )
                             ) : null}
 
-                            {job.status === 'ready' && !waitingForHandover ? (
-                              <p className="small muted">Menunggu penyerahan.</p>
+                            {waitingForServed ? (
+                              canServe ? (
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  onClick={() => handleServed(order)}
+                                >
+                                  Konfirmasi sudah disajikan
+                                </Button>
+                              ) : (
+                                <p className="small muted">
+                                  Menunggu staf mengonfirmasi penyajian.
+                                </p>
+                              )
                             ) : null}
                           </footer>
                         </article>
@@ -319,7 +369,7 @@ export function KitchenPage() {
           <Card>
             <CardHead
               title="Selesai hari ini"
-              description="Dine-in selesai saat semua item Siap. Takeaway selesai setelah penyerahan dikonfirmasi."
+              description="Dine-in selesai setelah staf mengonfirmasi penyajian. Takeaway selesai setelah penyerahan dikonfirmasi."
               actions={<Badge tone="neutral">{completedToday.length} tiket</Badge>}
             />
             {completedToday.length === 0 ? (
