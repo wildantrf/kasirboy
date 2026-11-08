@@ -70,6 +70,8 @@ export interface ProductInput {
   description: string;
   price: number;
   categoryId: string;
+  /** Data URL foto menu; `null` menghapus foto pada saat update. */
+  photo?: string | null;
 }
 
 export interface BranchInput {
@@ -117,8 +119,12 @@ export interface AppActions {
 
   addProduct: (input: ProductInput) => void;
   updateProduct: (productId: string, patch: Partial<ProductInput>) => void;
+  deleteProduct: (productId: string) => void;
   setProductAvailability: (productId: string, availability: ProductAvailability) => void;
   addCategory: (name: string) => void;
+  /** Geser kategori satu posisi pada urutan tampil cabang aktif. */
+  moveCategory: (categoryId: string, direction: 'up' | 'down') => void;
+  deleteCategory: (categoryId: string) => void;
 
   addTable: (label: string, seats: number) => void;
 
@@ -200,6 +206,22 @@ function persist(state: AppState): void {
 
 function normalize(value: string): string {
   return value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+/** Batas aman agar kuota localStorage tidak terisi oleh foto. */
+const MAX_PHOTO_LENGTH = 400_000;
+
+function normalizePhoto(photo: string | null | undefined): string | null {
+  if (!photo) {
+    return null;
+  }
+  if (!/^data:image\/(png|jpeg|webp);base64,/.test(photo)) {
+    throw new AppError('menu/photo-format', 'Format foto menu tidak didukung.');
+  }
+  if (photo.length > MAX_PHOTO_LENGTH) {
+    throw new AppError('menu/photo-size', 'Foto menu masih terlalu besar setelah dikompres.');
+  }
+  return photo;
 }
 
 function addPeriod(from: Date, period: 'monthly' | 'yearly'): Date {
@@ -1274,6 +1296,7 @@ export function createAppStore(): AppStore {
             description: input.description.trim().slice(0, 160),
             price: Math.round(input.price),
             availability: 'available',
+            photo: normalizePhoto(input.photo),
             updatedAt: nowIso(),
           },
           ...state.products,
@@ -1315,6 +1338,10 @@ export function createAppStore(): AppStore {
                 price: Math.round(price),
                 description: patch.description?.trim().slice(0, 160) ?? candidate.description,
                 categoryId: patch.categoryId ?? candidate.categoryId,
+                photo:
+                  patch.photo === undefined
+                    ? (candidate.photo ?? null)
+                    : normalizePhoto(patch.photo),
                 updatedAt: nowIso(),
               }
             : candidate,
@@ -1325,6 +1352,27 @@ export function createAppStore(): AppStore {
           actorName: context.actorName,
           action: 'menu.updated',
           detail: `Produk "${name}" diperbarui (snapshot transaksi lama tidak berubah).`,
+        }),
+      });
+    },
+
+    deleteProduct(productId) {
+      const product = state.products.find((candidate) => candidate.id === productId);
+      if (!product) {
+        throw new AppError('menu/not-found', 'Produk tidak ditemukan.');
+      }
+      const branch = branchInScope(product.branchId);
+      const context = requirePermission('menu.manage');
+
+      commit({
+        ...state,
+        products: state.products.filter((candidate) => candidate.id !== productId),
+        auditEvents: pushAudit(state.auditEvents, {
+          businessId: branch.businessId,
+          branchId: branch.id,
+          actorName: context.actorName,
+          action: 'menu.deleted',
+          detail: `Produk "${product.name}" dihapus dari katalog (snapshot transaksi lama tetap).`,
         }),
       });
     },
@@ -1385,6 +1433,93 @@ export function createAppStore(): AppStore {
             displayOrder: order,
           },
         ],
+      });
+    },
+
+    moveCategory(categoryId, direction) {
+      const branch = workingBranch();
+      const context = requirePermission('menu.manage');
+
+      const siblings = state.categories
+        .filter((category) => category.branchId === branch.id)
+        .sort((a, b) => a.displayOrder - b.displayOrder);
+      const index = siblings.findIndex((category) => category.id === categoryId);
+      if (index === -1) {
+        throw new AppError('menu/category-missing', 'Kategori tidak ditemukan pada cabang ini.');
+      }
+
+      const target = direction === 'up' ? index - 1 : index + 1;
+      if (target < 0 || target >= siblings.length) {
+        return;
+      }
+
+      const reordered = [...siblings];
+      [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+      const orderById = new Map(
+        reordered.map((category, position) => [category.id, position + 1] as const),
+      );
+
+      commit({
+        ...state,
+        categories: state.categories.map((category) =>
+          orderById.has(category.id)
+            ? { ...category, displayOrder: orderById.get(category.id) ?? category.displayOrder }
+            : category,
+        ),
+        auditEvents: pushAudit(state.auditEvents, {
+          businessId: branch.businessId,
+          branchId: branch.id,
+          actorName: context.actorName,
+          action: 'menu.updated',
+          detail: `Urutan kategori "${siblings[index].name}" digeser ${direction === 'up' ? 'naik' : 'turun'}.`,
+        }),
+      });
+    },
+
+    deleteCategory(categoryId) {
+      const branch = workingBranch();
+      const context = requirePermission('menu.manage');
+
+      const category = state.categories.find(
+        (candidate) => candidate.id === categoryId && candidate.branchId === branch.id,
+      );
+      if (!category) {
+        throw new AppError('menu/category-missing', 'Kategori tidak ditemukan pada cabang ini.');
+      }
+
+      const productCount = state.products.filter(
+        (product) => product.categoryId === category.id,
+      ).length;
+      if (productCount > 0) {
+        throw new AppError(
+          'menu/category-in-use',
+          `Kategori "${category.name}" masih memiliki ${productCount} produk. Pindahkan atau hapus produknya terlebih dahulu.`,
+        );
+      }
+
+      const remaining = state.categories
+        .filter((candidate) => candidate.branchId === branch.id && candidate.id !== categoryId)
+        .sort((a, b) => a.displayOrder - b.displayOrder);
+      const orderById = new Map(
+        remaining.map((candidate, position) => [candidate.id, position + 1] as const),
+      );
+
+      commit({
+        ...state,
+        categories: state.categories
+          .filter((candidate) => candidate.id !== categoryId)
+          .map((candidate) =>
+            orderById.has(candidate.id)
+              ? { ...candidate, displayOrder: orderById.get(candidate.id) ?? candidate.displayOrder }
+              : candidate,
+          ),
+        auditEvents: pushAudit(state.auditEvents, {
+          businessId: branch.businessId,
+          branchId: branch.id,
+          actorName: context.actorName,
+          action: 'menu.deleted',
+          detail: `Kategori "${category.name}" dihapus dari katalog.`,
+        }),
       });
     },
 

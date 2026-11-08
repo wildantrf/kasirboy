@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useApp, useAppState } from '../state/AppProvider';
 import { useToast } from '../components/toast';
-import { Badge, Button, EmptyState, Note, Stepper } from '../components/ui';
+import { Badge, Button, EmptyState, Modal, Note, Stepper } from '../components/ui';
 import { Icon } from '../components/icons';
 import { Money } from '../components/domain';
 import { QrPlaceholder } from '../components/QrPlaceholder';
@@ -24,7 +24,9 @@ export function QrOrderPage() {
 
   const [cart, setCart] = useState<CartLine[]>([]);
   const [search, setSearch] = useState('');
-  const [categoryId, setCategoryId] = useState('all');
+  const [activeCategoryId, setActiveCategoryId] = useState('all');
+  const [showSummary, setShowSummary] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<{ src: string; name: string } | null>(null);
   const [customerNote, setCustomerNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -41,6 +43,9 @@ export function QrOrderPage() {
 
   const products = useMemo(() => (branch ? productsOf(state, branch.id) : []), [state, branch]);
   const categories = useMemo(() => (branch ? categoriesOf(state, branch.id) : []), [state, branch]);
+
+  const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const sectionsTopRef = useRef<HTMLDivElement | null>(null);
 
   const pendingOrder = attemptId
     ? state.orders.find((order) => order.attempts.some((attempt) => attempt.id === attemptId))
@@ -82,12 +87,100 @@ export function QrOrderPage() {
       })
     : null;
 
-  const filtered = products.filter((product) => {
-    const query = search.trim().toLowerCase();
-    const inCategory = categoryId === 'all' || product.categoryId === categoryId;
-    const matches = !query || product.name.toLowerCase().includes(query);
-    return inCategory && matches;
-  });
+  const searchQuery = search.trim().toLowerCase();
+
+  const groups = useMemo(
+    () =>
+      categories
+        .map((category) => ({
+          category,
+          items: products.filter((product) => product.categoryId === category.id),
+        }))
+        .filter((group) => group.items.length > 0),
+    [categories, products],
+  );
+
+  const searchResults = useMemo(
+    () =>
+      searchQuery
+        ? products.filter((product) => product.name.toLowerCase().includes(searchQuery))
+        : [],
+    [products, searchQuery],
+  );
+
+  const quantityById = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const line of cart) {
+      counts.set(line.productId, (counts.get(line.productId) ?? 0) + line.quantity);
+    }
+    return counts;
+  }, [cart]);
+
+  // Sorot chip kategori sesuai posisi gulir pelanggan, bukan hasil klik saja.
+  useEffect(() => {
+    if (searchQuery) {
+      return;
+    }
+
+    function updateActiveCategory() {
+      const sections = groups
+        .map((group) => ({ id: group.category.id, el: sectionRefs.current.get(group.category.id) }))
+        .filter((entry): entry is { id: string; el: HTMLElement } => Boolean(entry.el));
+
+      if (sections.length === 0) {
+        setActiveCategoryId('all');
+        return;
+      }
+
+      let current = 'all';
+      for (const section of sections) {
+        if (section.el.getBoundingClientRect().top <= 120) {
+          current = section.id;
+        }
+      }
+
+      const atBottom =
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+      if (atBottom) {
+        current = sections[sections.length - 1].id;
+      }
+
+      setActiveCategoryId(current);
+    }
+
+    updateActiveCategory();
+    window.addEventListener('scroll', updateActiveCategory, { passive: true });
+    window.addEventListener('resize', updateActiveCategory);
+    return () => {
+      window.removeEventListener('scroll', updateActiveCategory);
+      window.removeEventListener('resize', updateActiveCategory);
+    };
+  }, [groups, searchQuery]);
+
+  function scrollToCategory(targetId: string) {
+    if (targetId === 'all') {
+      const container = sectionsTopRef.current;
+      if (!container) {
+        return;
+      }
+      window.scrollTo({
+        top: container.getBoundingClientRect().top + window.scrollY - 16,
+        behavior: 'smooth',
+      });
+      return;
+    }
+    sectionRefs.current.get(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function jumpToCategory(targetId: string) {
+    setActiveCategoryId(targetId);
+    if (searchQuery) {
+      setSearch('');
+      window.requestAnimationFrame(() => scrollToCategory(targetId));
+      return;
+    }
+    scrollToCategory(targetId);
+  }
 
   function addProduct(product: Product) {
     if (product.availability !== 'available') {
@@ -114,6 +207,113 @@ export function QrOrderPage() {
     });
   }
 
+  function removeProduct(product: Product) {
+    setCart((current) => {
+      let index = -1;
+      for (let cursor = current.length - 1; cursor >= 0; cursor -= 1) {
+        if (current[cursor].productId === product.id && current[cursor].note === '') {
+          index = cursor;
+          break;
+        }
+      }
+      if (index === -1) {
+        index = current.map((line) => line.productId).lastIndexOf(product.id);
+      }
+      if (index === -1) {
+        return current;
+      }
+      if (current[index].quantity <= 1) {
+        return current.filter((_, position) => position !== index);
+      }
+      return current.map((line, position) =>
+        position === index ? { ...line, quantity: line.quantity - 1 } : line,
+      );
+    });
+  }
+
+  function renderProductRow(product: Product) {
+    const soldOut = product.availability === 'sold_out';
+    const quantity = quantityById.get(product.id) ?? 0;
+    const photo = product.photo ?? null;
+
+    return (
+      <div key={product.id} className={`qr-product-row ${soldOut ? 'is-soldout' : ''}`}>
+        {photo ? (
+          <button
+            type="button"
+            className="qr-product-row__thumb-btn"
+            onClick={() => setPhotoPreview({ src: photo, name: product.name })}
+            aria-label={`Perbesar foto ${product.name}`}
+          >
+            <span className="qr-product-row__thumb" aria-hidden="true">
+              <img src={photo} alt="" loading="lazy" />
+            </span>
+          </button>
+        ) : (
+          <span className="qr-product-row__thumb-wrap" aria-hidden="true">
+            <span className="qr-product-row__thumb">
+              <Icon name="image" size={20} />
+            </span>
+          </span>
+        )}
+        <button
+          type="button"
+          className="qr-product-row__tap"
+          onClick={() => addProduct(product)}
+          disabled={soldOut}
+          aria-label={`Tambah ${product.name}, ${formatIDR(product.price)}${soldOut ? ', habis' : ''}`}
+        >
+          <span className="qr-product-row__body">
+            <span className="qr-product-row__name">{product.name}</span>
+            {product.description ? (
+              <span className="qr-product-row__desc">{product.description}</span>
+            ) : null}
+            <span className="qr-product-row__price">
+              <Money value={product.price} />
+            </span>
+          </span>
+        </button>
+
+        <div className="qr-product-row__actions">
+          {soldOut ? (
+            <Badge tone="danger">Habis</Badge>
+          ) : quantity > 0 ? (
+            <div className="qty-stepper qty-stepper--compact" role="group" aria-label={`Jumlah ${product.name}`}>
+              <button
+                type="button"
+                className="qty-stepper__btn"
+                onClick={() => removeProduct(product)}
+                aria-label={`Kurangi ${product.name}`}
+              >
+                <Icon name="minus" size={14} />
+              </button>
+              <span className="qty-stepper__value" aria-live="polite">
+                {quantity}
+              </span>
+              <button
+                type="button"
+                className="qty-stepper__btn qty-stepper__btn--plus"
+                onClick={() => addProduct(product)}
+                aria-label={`Tambah ${product.name}`}
+              >
+                <Icon name="plus" size={14} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="product-tile__add"
+              onClick={() => addProduct(product)}
+              aria-label={`Tambah ${product.name}`}
+            >
+              <Icon name="plus" size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   async function handlePay() {
     setError(null);
     setBusy(true);
@@ -132,6 +332,7 @@ export function QrOrderPage() {
         customerNote,
       });
       setAttemptId(result.attempt.id);
+      setShowSummary(false);
     } catch (caught) {
       setError(describeError(caught));
       pushToast({ tone: 'error', title: 'Pesanan belum dibuat', message: describeError(caught) });
@@ -322,8 +523,171 @@ export function QrOrderPage() {
     );
   }
 
+  if (showSummary) {
+    const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
+
+    return (
+      <div className="qr-page">
+        <header className="qr-topbar">
+          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setShowSummary(false)}>
+            <Icon name="chevron-left" size={16} />
+            <span>Kembali ke menu</span>
+          </button>
+          <span className="qr-topbar__table">{table.label}</span>
+        </header>
+
+        <div className="qr-summary">
+          <div>
+            <p className="eyebrow">Langkah 2 dari 2</p>
+            <h1 className="display">Ringkasan pesanan</h1>
+            <p className="muted">
+              {itemCount} item · {business.name} · {table.label}
+            </p>
+          </div>
+
+          {cart.length === 0 ? (
+            <div className="qr-summary__card">
+              <p className="muted">Keranjang masih kosong.</p>
+              <Button variant="secondary" onClick={() => setShowSummary(false)}>
+                Kembali ke menu
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="qr-summary__card">
+                <ul className="qr-summary__items">
+                  {cart.map((line) => {
+                    const product = products.find((item) => item.id === line.productId);
+                    return (
+                      <li className="qr-summary__item" key={line.key}>
+                        <span className="qr-summary__thumb">
+                          {product?.photo ? (
+                            <img src={product.photo} alt="" />
+                          ) : (
+                            <Icon name="image" size={18} />
+                          )}
+                        </span>
+                        <div className="qr-summary__body">
+                          <div className="qr-summary__head">
+                            <span className="qr-summary__name">{line.name}</span>
+                            <button
+                              type="button"
+                              className="icon-btn"
+                              aria-label={`Hapus ${line.name}`}
+                              onClick={() =>
+                                setCart((current) => current.filter((item) => item.key !== line.key))
+                              }
+                            >
+                              <Icon name="close" size={16} />
+                            </button>
+                          </div>
+                          <input
+                            className="input input--compact"
+                            placeholder="Catatan (tanpa biaya)"
+                            aria-label={`Catatan untuk ${line.name}`}
+                            value={line.note}
+                            onChange={(event) =>
+                              setCart((current) =>
+                                current.map((item) =>
+                                  item.key === line.key
+                                    ? { ...item, note: event.target.value.slice(0, 140) }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
+                          <div className="qr-summary__controls">
+                            <Stepper
+                              label={line.name}
+                              value={line.quantity}
+                              max={20}
+                              onChange={(quantity) =>
+                                setCart((current) =>
+                                  current.map((item) =>
+                                    item.key === line.key ? { ...item, quantity } : item,
+                                  ),
+                                )
+                              }
+                            />
+                            <Money value={line.unitPrice * line.quantity} />
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+
+              <div className="qr-summary__card">
+                <input
+                  className="input input--compact"
+                  placeholder="Catatan pesanan (opsional)"
+                  aria-label="Catatan pesanan"
+                  value={customerNote}
+                  onChange={(event) => setCustomerNote(event.target.value)}
+                />
+                {totals ? (
+                  <div className="totals">
+                    <div className="totals__row">
+                      <span>Subtotal</span>
+                      <Money value={totals.subtotal} />
+                    </div>
+                    <div className="totals__row">
+                      <span>Pajak ({totals.taxRate}%)</span>
+                      <Money value={totals.taxAmount} />
+                    </div>
+                    {totals.serviceRate > 0 ? (
+                      <div className="totals__row">
+                        <span>Layanan ({totals.serviceRate}%)</span>
+                        <Money value={totals.serviceAmount} />
+                      </div>
+                    ) : null}
+                    <div className="totals__row totals__row--grand">
+                      <span>Total</span>
+                      <Money value={totals.finalTotal} />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              {error ? (
+                <Note tone="danger" title="Pesanan belum dibuat">
+                  {error}
+                </Note>
+              ) : null}
+              {!network.online ? (
+                <Note tone="warning" title="Offline" icon="wifi-off">
+                  Pesanan QR memerlukan internet. Tunai offline hanya tersedia pada perangkat kasir utama.
+                </Note>
+              ) : null}
+
+              <div className="qr-summary__card qr-summary__pay">
+                <div className="qr-summary__method">
+                  <span className="small muted">Metode pembayaran</span>
+                  <strong>QRIS</strong>
+                </div>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  onClick={handlePay}
+                  disabled={cart.length === 0 || busy || !network.online}
+                >
+                  {busy ? 'Membuat QRIS…' : `Bayar ${totals ? formatIDR(totals.finalTotal) : ''}`}
+                </Button>
+                <p className="small muted">
+                  Pembayaran hanya QRIS. Satu pesanan satu pembayaran penuh, tanpa bayar sebagian.
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="qr-page">
+    <div className={`qr-page ${cart.length > 0 ? 'qr-page--cartbar' : ''}`}>
       <header className="qr-topbar">
         <span className="brand__mark" aria-hidden="true">M</span>
         <div className="qr-topbar__brand">
@@ -343,13 +707,6 @@ export function QrOrderPage() {
         </p>
       </section>
 
-      {cart.length > 0 ? (
-        <div className="qr-banner" role="status">
-          <span>{cart.reduce((sum, line) => sum + line.quantity, 0)} item di keranjang</span>
-          <span className="money">{totals ? formatIDR(totals.finalTotal) : ''}</span>
-        </div>
-      ) : null}
-
       <div className="qr-menu">
         <div className="qr-menu__main">
           <div className="qr-menu__filters">
@@ -366,167 +723,114 @@ export function QrOrderPage() {
             </div>
           </div>
 
-          <div className="category-chips" role="group" aria-label="Kategori menu">
-            <button
-              type="button"
-              className={`chip ${categoryId === 'all' ? 'is-active' : ''}`}
-              onClick={() => setCategoryId('all')}
-            >
-              Semua
-            </button>
-            {categories.map((category) => (
+          <div className="qr-menu__categories">
+            <div className="category-chips" role="group" aria-label="Kategori menu">
               <button
-                key={category.id}
                 type="button"
-                className={`chip ${categoryId === category.id ? 'is-active' : ''}`}
-                onClick={() => setCategoryId(category.id)}
+                className={`chip ${!searchQuery && activeCategoryId === 'all' ? 'is-active' : ''}`}
+                aria-pressed={!searchQuery && activeCategoryId === 'all'}
+                onClick={() => jumpToCategory('all')}
               >
-                {category.name}
+                Semua
               </button>
-            ))}
-          </div>
-
-          <div className="product-grid qr-product-grid">
-            {filtered.map((product) => {
-              const soldOut = product.availability === 'sold_out';
-              return (
-                <button
-                  key={product.id}
-                  type="button"
-                  className={`product-tile ${soldOut ? 'is-soldout' : ''}`}
-                  onClick={() => addProduct(product)}
-                  disabled={soldOut}
-                >
-                  <span className="product-tile__name">{product.name}</span>
-                  <span className="product-tile__desc">{product.description}</span>
-                  <span className="product-tile__foot">
-                    <span className="product-tile__price">
-                      <Money value={product.price} />
-                    </span>
-                    {soldOut ? (
-                      <Badge tone="danger">Habis</Badge>
-                    ) : (
-                      <span className="product-tile__add" aria-hidden="true">
-                        <Icon name="plus" size={14} />
-                      </span>
-                    )}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {filtered.length === 0 ? (
-            <p className="small muted">Menu tidak ditemukan. Coba kata kunci lain.</p>
-          ) : null}
-        </div>
-
-        <aside className="qr-cart" aria-label="Keranjang pelanggan">
-          <h2 className="qr-cart__title">Pesanan Anda</h2>
-          {cart.length === 0 ? (
-            <p className="small muted">Belum ada item. Ketuk menu untuk menambahkan.</p>
-          ) : (
-            <ul className="cart-lines">
-              {cart.map((line) => (
-                <li className="cart-line" key={line.key}>
-                  <div className="cart-line__top">
-                    <span className="cart-line__name">{line.name}</span>
-                    <button
-                      type="button"
-                      className="icon-btn"
-                      aria-label={`Hapus ${line.name}`}
-                      onClick={() => setCart((current) => current.filter((item) => item.key !== line.key))}
-                    >
-                      <Icon name="close" size={16} />
-                    </button>
-                  </div>
-                  <div className="cart-line__controls">
-                    <Stepper
-                      label={line.name}
-                      value={line.quantity}
-                      max={20}
-                      onChange={(quantity) =>
-                        setCart((current) =>
-                          current.map((item) => (item.key === line.key ? { ...item, quantity } : item)),
-                        )
-                      }
-                    />
-                    <Money value={line.unitPrice * line.quantity} />
-                  </div>
-                  <input
-                    className="input input--compact"
-                    placeholder="Catatan (tanpa biaya)"
-                    aria-label={`Catatan untuk ${line.name}`}
-                    value={line.note}
-                    onChange={(event) =>
-                      setCart((current) =>
-                        current.map((item) =>
-                          item.key === line.key ? { ...item, note: event.target.value.slice(0, 140) } : item,
-                        ),
-                      )
-                    }
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <input
-            className="input input--compact"
-            placeholder="Catatan pesanan (opsional)"
-            aria-label="Catatan pesanan"
-            value={customerNote}
-            onChange={(event) => setCustomerNote(event.target.value)}
-          />
-
-          {totals ? (
-            <div className="totals">
-              <div className="totals__row">
-                <span>Subtotal</span>
-                <Money value={totals.subtotal} />
-              </div>
-              <div className="totals__row">
-                <span>Pajak ({totals.taxRate}%)</span>
-                <Money value={totals.taxAmount} />
-              </div>
-              {totals.serviceRate > 0 ? (
-                <div className="totals__row">
-                  <span>Layanan ({totals.serviceRate}%)</span>
-                  <Money value={totals.serviceAmount} />
-                </div>
-              ) : null}
-              <div className="totals__row totals__row--grand">
-                <span>Total</span>
-                <Money value={totals.finalTotal} />
-              </div>
+              {groups.map(({ category }) => {
+                const isActive = !searchQuery && activeCategoryId === category.id;
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    className={`chip ${isActive ? 'is-active' : ''}`}
+                    aria-pressed={isActive}
+                    onClick={() => jumpToCategory(category.id)}
+                  >
+                    {category.name}
+                  </button>
+                );
+              })}
             </div>
-          ) : null}
+          </div>
 
-          {error ? <Note tone="danger" title="Pesanan belum dibuat">{error}</Note> : null}
-          {!network.online ? (
-            <Note tone="warning" title="Offline" icon="wifi-off">
-              Pesanan QR memerlukan internet. Tunai offline hanya tersedia pada perangkat kasir utama.
-            </Note>
-          ) : null}
-
-          <Button
-            variant="primary"
-            size="lg"
-            fullWidth
-            onClick={handlePay}
-            disabled={cart.length === 0 || busy || !network.online}
-          >
-            {busy ? 'Membuat QRIS…' : 'Bayar dengan QRIS'}
-          </Button>
-          <p className="small muted">
-            Tanpa diskon pelanggan, tanpa pembayaran sebagian. Satu pesanan satu pembayaran penuh.
-          </p>
-        </aside>
+          {searchQuery ? (
+            <>
+              <div className="qr-product-list">
+                {searchResults.map(renderProductRow)}
+              </div>
+              {searchResults.length === 0 ? (
+                <p className="small muted">Menu tidak ditemukan. Coba kata kunci lain.</p>
+              ) : null}
+            </>
+          ) : groups.length === 0 ? (
+            <p className="small muted">Belum ada menu pada cabang ini.</p>
+          ) : (
+            <div className="qr-category-sections" ref={sectionsTopRef}>
+              {groups.map(({ category, items }) => (
+                <section
+                  key={category.id}
+                  className="qr-category"
+                  aria-labelledby={`qr-cat-title-${category.id}`}
+                  ref={(node) => {
+                    if (node) {
+                      sectionRefs.current.set(category.id, node);
+                    } else {
+                      sectionRefs.current.delete(category.id);
+                    }
+                  }}
+                >
+                  <h2 className="qr-category__title" id={`qr-cat-title-${category.id}`}>
+                    {category.name}
+                  </h2>
+                  <div className="qr-product-list">
+                    {items.map(renderProductRow)}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+
+      {cart.length > 0 ? (
+        <div className="qr-cartbar" role="region" aria-label="Ringkasan keranjang">
+          <div className="qr-cartbar__inner">
+            <div className="qr-cartbar__info">
+              <span className="qr-cartbar__count">
+                {cart.reduce((sum, line) => sum + line.quantity, 0)} item
+              </span>
+              <strong className="qr-cartbar__total money">
+                {formatIDR(totals?.subtotal ?? 0)}
+              </strong>
+            </div>
+            <Button
+              variant="primary"
+              size="lg"
+              className="qr-cartbar__cta"
+              onClick={() => setShowSummary(true)}
+            >
+              Pesan
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <footer className="qr-footer">
         <p>MejaFlow · demo pemesanan QR meja. Tidak ada transaksi nyata.</p>
       </footer>
+
+      <Modal
+        open={Boolean(photoPreview)}
+        onClose={() => setPhotoPreview(null)}
+        title={photoPreview?.name ?? 'Foto menu'}
+        size="lg"
+        footer={
+          <Button variant="secondary" onClick={() => setPhotoPreview(null)}>
+            Tutup
+          </Button>
+        }
+      >
+        {photoPreview ? (
+          <img className="qr-photo-large" src={photoPreview.src} alt={`Foto ${photoPreview.name}`} />
+        ) : null}
+      </Modal>
     </div>
   );
 }

@@ -413,6 +413,11 @@ export function PosPage() {
                     disabled={soldOut}
                     aria-label={`${product.name}, ${formatIDR(product.price)}${soldOut ? ', habis' : ''}`}
                   >
+                    {product.photo ? (
+                      <span className="product-tile__media" aria-hidden="true">
+                        <img src={product.photo} alt="" loading="lazy" />
+                      </span>
+                    ) : null}
                     <span className="product-tile__name">{product.name}</span>
                     <span className="product-tile__desc">{product.description}</span>
                     <span className="product-tile__foot">

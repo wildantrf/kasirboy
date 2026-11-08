@@ -132,7 +132,15 @@ const paths = {
     </>
   ),
   'chevron-down': <path d="m6 9 6 6 6-6" />,
+  'chevron-up': <path d="m6 15 6-6 6 6" />,
   'chevron-left': <path d="m14 6-6 6 6 6" />,
+  image: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2.5" />
+      <circle cx="9" cy="10" r="1.7" />
+      <path d="m4.5 18 5-5 4 4 2.5-2.5 3.5 3.5" />
+    </>
+  ),
   store: (
     <>
       <path d="M3 9l1.6-4.2A2 2 0 0 1 6.5 3.5h11a2 2 0 0 1 1.9 1.3L21 9" />

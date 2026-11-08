@@ -1,6 +1,6 @@
 # MejaFlow — Product Requirements Document (PRD)
 
-**Versi:** 2.2 — Draft hasil discovery baru + revisi KDS (D-64, D-65)  
+**Versi:** 2.4 — Draft hasil discovery baru + revisi KDS, katalog & pemesanan QR (D-64, D-65)  
 **Tanggal:** 8 November 2026  
 **Bahasa:** Indonesia  
 **Status:** Keputusan produk telah dikonfirmasi melalui wawancara; usulan teknis dan TBD perlu ditinjau sebelum implementasi.
@@ -9,9 +9,13 @@
 
 **Revisi 2.2 (8 November 2026):** Dine-in dengan KDS dipindahkan ke kolom Siap setelah semua item Siap dan baru selesai setelah staf mengonfirmasi penyajian. **Dikonfirmasi: D-65.**
 
+**Revisi 2.3 (8 November 2026):** Katalog mendapat **foto produk opsional** (satu foto per produk) dan **urutan kategori yang dapat diatur** oleh pemilik/manajer. Keduanya dikonfirmasi langsung melalui permintaan revisi pengguna, di luar sesi discovery awal, sehingga belum memiliki nomor D. Detail penyimpanan/format foto dicatat pada TBD-24.
+
+**Revisi 2.4 (8 November 2026):** Katalog menambah **penghapusan produk** dan **penghapusan kategori kosong** oleh pengguna dengan izin mengelola menu. Layar pesan pelanggan QR dirombak **mobile-first**: daftar menu satu kolom di ponsel dengan foto di kiri teks, dua/tiga kolom di tablet/desktop, foto dapat diketuk untuk diperbesar, kontrol jumlah (−/jumlah/+) pada setiap produk, bilah keranjang tetap di bawah dengan jumlah item dan subtotal, serta layar ringkasan sebelum pembayaran yang hanya menawarkan QRIS. Dikonfirmasi melalui permintaan revisi pengguna, di luar discovery, sehingga belum memiliki nomor D; kebijakan arsip/pemulihan dicatat pada TBD-25.
+
 Dokumen ini ditulis dari nol berdasarkan 65 keputusan terbaru pengguna. PRD lama, blueprint sebelumnya, dan perilaku aplikasi yang sudah ada tidak otomatis menjadi persyaratan versi ini. Dokumen ini menjelaskan produk yang akan dibangun, bukan menyatakan semua fiturnya sudah tersedia.
 
-**Cara membaca:** **Dikonfirmasi** berarti berasal dari jawaban pengguna; **Usulan** berarti rancangan untuk mendukung kebutuhan tersebut; **TBD** berarti belum diputuskan. Penanda D-01 sampai D-65 menghubungkan isi dengan keputusan discovery. Penambahan batas, alur, atau teknologi yang belum dikonfirmasi tidak boleh diperlakukan sebagai keputusan produk final.
+**Cara membaca:** **Dikonfirmasi** berarti berasal dari jawaban pengguna; **Usulan** berarti rancangan untuk mendukung kebutuhan tersebut; **TBD** berarti belum diputuskan. Penanda D-01 sampai D-65 menghubungkan isi dengan keputusan discovery; keputusan revisi 2.3–2.4 yang dikonfirmasi di luar sesi discovery ditandai eksplisit tanpa nomor D. Penambahan batas, alur, atau teknologi yang belum dikonfirmasi tidak boleh diperlakukan sebagai keputusan produk final.
 
 1. [Overview](#1-overview)
 2. [Requirements](#2-requirements)
@@ -202,6 +206,8 @@ Register ini membatasi hal yang belum disepakati tanpa memperpanjang discovery u
 | TBD-21 | Versi browser/OS/perangkat serta kelayakan offline dalam browser tanpa instalasi | Pilot |
 | TBD-22 | Retensi, arsip/penghapusan data, penanganan akun dan kewajiban legal | Peluncuran |
 | TBD-23 | Scope, paket, biaya, kuota, provider dan kualitas AI | Rilis fitur AI kemudian |
+| TBD-24 | Penyimpanan, format/kompresi, ukuran maksimum, retensi dan izin akses foto produk; perilaku unggah saat offline | Foto produk produksi |
+| TBD-25 | Kebijakan penghapusan permanen vs arsip/pemulihan produk dan kategori yang dihapus, serta retensi audit terkait | Katalog produksi |
 
 ### 2.9 Kriteria penerimaan minimum
 
@@ -251,6 +257,13 @@ Kriteria berikut memverifikasi keputusan produk. Kriteria yang bergantung pada T
 | AC-40 | Laporan | Total penjualan cocok dengan definisi yang disetujui dan riwayat; tidak ada modul shift/selisih kas |
 | AC-41 | KDS tanpa nilai uang | Tiket KDS tidak menampilkan total/biaya pesanan; teks item lebih besar dan menekan teks/baris item menandainya Siap |
 | AC-42 | Konfirmasi disajikan | Dine-in tetap di kolom Siap sampai staf mengonfirmasi penyajian; setelah konfirmasi pesanan selesai dan meja dilepas bila tidak ada pesanan aktif lain |
+| AC-43 | Foto produk | Setiap produk dapat memiliki satu foto opsional; mengganti atau menghapus foto tidak mengubah harga, status Tersedia/Habis, maupun snapshot transaksi lama, dan produk tanpa foto tetap dapat dijual |
+| AC-44 | Urutan kategori | Pengguna dengan izin mengelola menu dapat menggeser urutan kategori cabang; urutan baru dipakai chip kategori di kasir dan menu QR meja tanpa memindahkan produk atau mengubah transaksi |
+| AC-45 | Hapus produk | Produk dapat dihapus dari katalog cabang oleh pengguna dengan izin menu; riwayat transaksi lama tetap utuh dan produk terhapus tidak dapat dipilih pada transaksi baru |
+| AC-46 | Hapus kategori | Kategori hanya dapat dihapus bila tidak memiliki produk; percobaan menghapus kategori berisi produk ditolak dengan penjelasan jumlah produk |
+| AC-47 | Navigasi kategori QR | Daftar menu QR dikelompokkan sesuai urutan kategori; chip kategori mengikuti posisi gulir dan dapat diketuk untuk melompat; chip tetap satu baris dan dapat digulir horizontal bila melebihi lebar layar |
+| AC-48 | Keranjang & ringkasan QR | Pelanggan melihat jumlah item dan subtotal pada bilah keranjang bawah, membuka layar ringkasan berisi item, catatan, jumlah dan biaya, lalu membayar hanya melalui QRIS |
+| AC-49 | Foto & tata letak QR | Foto produk tampil di kiri teks pada daftar QR dan dapat diketuk untuk membuka tampilan besar; tata letak memakai satu kolom di ponsel serta dua/tiga kolom di tablet/desktop |
 
 ## 3. Core Features
 
@@ -266,6 +279,14 @@ Produk dijual dengan satu harga. Jika ada pilihan ukuran/rasa/harga berbeda, mas
 
 Kasir dan pelanggan QR meja dapat memberi catatan per item tanpa perubahan harga. KDS menampilkan produk, jumlah dan catatan yang sama. Pemisahan baris catatan untuk produk sama merupakan kebutuhan tampilan turunan; format akhirnya mengikuti desain. **D-35.**
 
+**Dikonfirmasi melalui revisi 2.3.** Setiap produk dapat memiliki **satu foto opsional** yang ditampilkan pada katalog menu internal, tile kasir, dan menu QR meja. Foto bukan bukti ketersediaan: status tetap **Tersedia/Habis** yang diubah manual. Produk tanpa foto tetap valid dan dijual dengan tampilan tanpa gambar. Mengganti atau menghapus foto tidak mengubah harga, status, atau snapshot transaksi lama. Hanya pengguna dengan izin mengelola menu yang dapat mengunggah atau mengganti foto; pelanggan QR tidak dapat mengunggah foto. Galeri multi-foto dan AI pembaca foto menu berada di luar versi pertama (lihat 3.8 dan 3.9).
+
+**Dikonfirmasi melalui revisi 2.3.** Kategori memiliki **urutan tampil per cabang** yang dapat diubah pengguna dengan izin mengelola menu. Urutan ini menentukan urutan chip kategori di kasir dan menu QR meja. Kategori baru ditempatkan di akhir urutan. Menggeser urutan kategori tidak memindahkan produk, tidak mengubah harga, dan tidak menulis ulang transaksi.
+
+**Dikonfirmasi melalui revisi 2.4.** **Kategori kosong dapat dihapus** oleh pengguna dengan izin mengelola menu; penghapusan ditolak bila kategori masih memiliki produk sehingga produk harus dipindahkan atau dihapus lebih dulu. Menghapus kategori tidak mengubah transaksi lama dan sisa kategori diurutkan ulang. Penamaan ulang kategori belum ditetapkan.
+
+**Dikonfirmasi melalui revisi 2.4.** **Produk dapat dihapus** dari katalog cabang oleh pengguna dengan izin mengelola menu. Penghapusan tidak menghapus atau menulis ulang transaksi lama karena item pesanan menyimpan nama dan harga saat transaksi. Produk yang dihapus tidak lagi muncul di kasir maupun menu QR. Kebijakan arsip/pemulihan permanen dicatat pada TBD-25.
+
 ### 3.3 POS kasir
 
 Kasir memilih dine-in/takeaway, produk, jumlah, catatan dan metode pembayaran yang tersedia pada paket. Diskon seluruh pesanan hanya dapat dimasukkan pemilik/manajer sebelum pembayaran. Total menampilkan subtotal, diskon, pajak, biaya layanan, penyesuaian pembulatan dan jumlah akhir.
@@ -279,6 +300,8 @@ Pada paket Berbayar, pelanggan membuka link QR meja cabang, memilih produk dan c
 Midtrans dipilih sebagai **kandidat**, bukan integrasi yang telah dijamin tersedia. QRIS nyata memerlukan bukti aktivasi merchant/kanal dan kontrak teknis yang sah. Kelayakan bisnis/cabang dan settlement harus diverifikasi; tidak ada model fee 1% atau pooling dana yang dibawa otomatis dari pembahasan lama. **D-57.**
 
 Gerbang merchant ditujukan untuk QRIS; PRD baru tidak menetapkan verifikasi Midtrans sebagai syarat menjalankan meja atau transaksi tunai. Kebijakan saat QRIS belum aktif harus menjelaskan fitur yang belum dapat dipakai tanpa menjanjikan QR self-order sudah berjalan.
+
+**Dikonfirmasi melalui revisi 2.4.** Layar pesan pelanggan dioptimalkan untuk **ponsel** dan tetap memakai lebar penuh pada tablet/desktop. Daftar menu dikelompokkan per kategori sesuai urutan tampil cabang, dengan **foto produk di kiri teks**; mengetuk foto membuka tampilan besar. Chip kategori menempel saat menggulir, menyorot kategori yang sedang dilihat, dan dapat diketuk untuk melompat; chip tetap satu baris dan dapat digulir horizontal bila melebihi lebar layar. Setiap produk menampilkan kontrol jumlah **−/jumlah/+**, dan **bilah keranjang tetap di bawah** menampilkan jumlah item serta subtotal dengan tombol **Pesan**. Tombol tersebut membuka layar **ringkasan pesanan** berisi item, catatan per item, jumlah, catatan pesanan, dan rincian biaya; pembayaran di layar pelanggan hanya **QRIS**.
 
 ### 3.5 KDS dan penyelesaian
 
@@ -316,6 +339,7 @@ Laporan hanya mencakup **total penjualan dan daftar riwayat transaksi**, per cab
 - Pembatalan, penggantian dan refund pesanan lunas melalui aplikasi. Penanganan eksternal tetap perlu prosedur sebelum menerima uang nyata; fitur tersebut tidak ditambahkan diam-diam. **D-31.**
 - Inventori jumlah, bahan baku, resep/HPP, purchasing dan stok otomatis.
 - Varian/modifier berbayar, voucher, promo otomatis, loyalty dan CRM.
+- Galeri multi-foto per produk, unggah foto oleh pelanggan QR, dan penyuntingan gambar lanjutan (crop manual, filter).
 - Split/mixed payments, draft keranjang tersimpan, dan prioritas KDS manual.
 - Thermal printing, pengiriman struk pelanggan, sesi kas dan rekonsiliasi laci.
 - Aplikasi native atau kewajiban instalasi PWA; offline browser tetap memerlukan validasi kompatibilitas.
@@ -335,7 +359,7 @@ Usulan alur berikutnya: unggah foto → hasil draft → cocokkan dengan gambar �
 3. Free digunakan sesuai batas 1 cabang/1 staf. Alur pemilihan paket awal dalam formulir registrasi merupakan detail desain; jangan memulai trial otomatis.
 4. Pemilik dapat mengaktifkan trial berbayar satu kali per bisnis. Sistem mencatat waktu mulai dan akhir 30 hari tanpa meminta metode pembayaran.
 5. Aktivasi QRIS dilakukan lewat mekanisme provider yang tervalidasi. Trial atau paket berbayar tidak menjadi bukti merchant siap menerima QRIS.
-6. Pemilik menambah cabang/staf sesuai kapasitas yang berlaku. Data/menu/harga disiapkan untuk masing-masing cabang.
+6. Pemilik menambah cabang/staf sesuai kapasitas yang berlaku. Data/menu/harga disiapkan untuk masing-masing cabang, termasuk foto produk opsional dan urutan kategori.
 
 ### 4.2 Transaksi kasir ketika online
 
@@ -353,11 +377,12 @@ Usulan alur berikutnya: unggah foto → hasil draft → cocokkan dengan gambar �
 
 1. Pelanggan memindai QR meja dan membuka browser yang mengidentifikasi bisnis, cabang dan meja.
 2. Sistem memeriksa paket, cabang yang operasional, serta kesiapan kanal QRIS.
-3. Pelanggan memilih produk Tersedia, jumlah dan catatan; tidak tersedia tambahan berbayar atau diskon yang diisi pelanggan.
-4. Sistem menyajikan subtotal dan biaya yang berlaku, lalu membuat percobaan QRIS untuk total final dalam rupiah.
-5. Selama Pending, pesanan belum masuk dapur. Menutup browser tidak menghapus referensi percobaan.
-6. Server memverifikasi hasil provider. Jika lunas, jalankan routing sesuai KDS cabang, tepat satu kali.
-7. Pesanan tambahan di meja yang sama memulai nomor/pembayaran baru.
+3. Pelanggan memilih produk Tersedia dari daftar per kategori; jumlah dapat ditambah/dikurangi langsung dari kartu produk atau layar ringkasan. Catatan per item diisi pada layar ringkasan; tidak ada tambahan berbayar atau diskon pelanggan.
+4. Bilah keranjang bawah menampilkan jumlah item dan subtotal. Menekan **Pesan** membuka layar ringkasan berisi item, catatan, jumlah, catatan pesanan, dan rincian biaya.
+5. Pelanggan menekan bayar; layar pelanggan hanya menawarkan QRIS. Sistem membuat percobaan QRIS untuk total final dalam rupiah.
+6. Selama Pending, pesanan belum masuk dapur. Menutup browser tidak menghapus referensi percobaan.
+7. Server memverifikasi hasil provider. Jika lunas, jalankan routing sesuai KDS cabang, tepat satu kali.
+8. Pesanan tambahan di meja yang sama memulai nomor/pembayaran baru.
 
 **TBD:** Identitas pelanggan, akses untuk membuka kembali status pesanan, informasi konfirmasi yang diperlihatkan, dan hubungan dengan struk staf. Tidak diwajibkan akun pelanggan atau pengiriman email/WhatsApp hanya karena tersedia QR meja. Untuk cabang tanpa staf dapur, keputusan saat ini tetap menyelesaikan transaksi segera setelah lunas.
 
@@ -394,12 +419,14 @@ Jika masa trial/berbayar habis tanpa pembayaran lanjutan, pemilik memilih satu c
 | Objek | Status/perubahan yang dibutuhkan | Catatan |
 |---|---|---|
 | Keranjang | Sedang diisi → bayar atau buang | Tidak ada save/resume draft |
+| Layar pesan QR | Menu → keranjang → ringkasan → percobaan QRIS | Pelanggan dapat kembali ke menu; ringkasan bukan draft tersimpan |
 | Percobaan QRIS | Pending → lunas terverifikasi/gagal/kedaluwarsa/penanganan status tidak pasti | Nilai tepat dan transisi provider divalidasi saat integrasi |
 | Pembayaran tunai/manual | Belum dikonfirmasi → lunas dikonfirmasi kasir | Jangan menyebut digital manual sebagai verifikasi otomatis provider |
 | Pesanan online dengan KDS | Lunas/Baru → Sedang Disiapkan → Siap → (dine-in) dikonfirmasi disajikan / (takeaway) diserahkan → Selesai | Pembayaran dan progres fulfillment adalah status berbeda |
 | Pesanan tanpa KDS | Lunas → Selesai | Tanpa tracking |
 | Pesanan tunai offline | Lunas/Selesai lokal → tersinkron | Sync status terpisah dari status pembayaran/fulfillment |
-| Produk | Tersedia ↔ Habis | Manual; bukan jumlah stok |
+| Produk | Tersedia ↔ Habis; dapat dihapus dari katalog | Manual; bukan jumlah stok; foto opsional tidak mengubah status |
+| Kategori | Urutan tampil digeser → dipakai chip kasir/QR; kategori kosong dapat dihapus | Perubahan urutan/penghapusan tidak memindahkan produk atau mengubah transaksi |
 | Meja | Terisi/Tersedia menurut pesanan terkait | Awal okupansi TBD; pelepasan setelah semua selesai sudah dikonfirmasi |
 | Paket bisnis | Free → trial/berbayar; trial/berbayar berakhir → transisi ke Free | State teknis transisi dan nama status bersifat usulan |
 
@@ -541,8 +568,8 @@ Penamaan subscription_invoices “berulang” berarti tagihan per periode dibuat
 
 | Entitas usulan | Kolom/relasi inti | Aturan penting |
 |---|---|---|
-| categories | id, business_id, branch_id, name, display_order | Pengelompokan produk adalah usulan UI; struktur final TBD |
-| products | id, business_id, branch_id, category_id, name, price_idr, availability, version | Satu harga; Tersedia/Habis; tidak ada stock_count/variant modifier wajib |
+| categories | id, business_id, branch_id, name, display_order | Urutan tampil menentukan chip kasir/QR dan dapat diubah pengguna dengan izin menu; hanya kategori kosong yang dapat dihapus, penghapusan ditolak bila masih memiliki produk |
+| products | id, business_id, branch_id, category_id, name, price_idr, availability, photo_ref/null, version | Satu harga; satu foto opsional; Tersedia/Habis; dapat dihapus dari katalog tanpa menulis ulang snapshot transaksi; tidak ada stock_count/variant modifier wajib |
 | charge_rules | branch_id, tax_rate, service_rate, applies_to_order_type, version | Model per-charge/per-tipe final TBD; masing-masing atas dasar setelah diskon |
 | dining_tables | id, business_id, branch_id, label, status_projection | Proyeksi availability sesuai pesanan; awal okupansi TBD |
 | orders | id, business_id, branch_id, public_number, source, order_type, table_id/null, payment_state, fulfillment_state, fulfillment_mode, device_id/null, timestamps | Nomor/pembayaran independen; source membedakan kasir/QR; fulfillment_mode membedakan KDS/tanpa tracking/offline |
@@ -553,7 +580,7 @@ Penamaan subscription_invoices “berulang” berarti tagihan per periode dibuat
 | provider_events | id, provider, event_key/dedup_hash, reference, received_at, processing_state | Idempotensi mengikuti karakter event provider; jangan mengasumsikan event_id selalu tersedia |
 | staff_receipts | id, order_id, snapshot/reference, created_at | Akses staf; tidak otomatis URL publik atau PDF pelanggan |
 
-Ketersediaan tidak menjadi inventory ledger. Tidak ada tabel wajib ingredients, recipes, stock_movements, refund_requests atau replacement_items pada lingkup pertama. Data uang internal memerlukan decimal/fixed precision yang disepakati; final total dan amount yang dibayar disimpan sesuai satuan rupiah yang telah dibulatkan.
+Ketersediaan tidak menjadi inventory ledger. Tidak ada tabel wajib ingredients, recipes, stock_movements, refund_requests atau replacement_items pada lingkup pertama. Data uang internal memerlukan decimal/fixed precision yang disepakati; final total dan amount yang dibayar disimpan sesuai satuan rupiah yang telah dibulatkan. Referensi foto produk adalah metadata katalog; `order_items` tidak menyimpan foto sehingga riwayat transaksi tidak berubah saat foto diganti. Penyimpanan fisik, ukuran, dan retensi foto mengikuti TBD-24. Penghapusan produk/kategori bersifat katalog: penghapusan tidak boleh memicu cascade ke `order_items` atau `order_totals`, dan relasi produk lama pada riwayat dipertahankan sebagai snapshot. Kebijakan arsip/pemulihan mengikuti TBD-25.
 
 ### 6.4 KDS, offline dan audit
 
@@ -604,7 +631,7 @@ PostgreSQL menawarkan transaksi atomik yang relevan untuk pencatatan payment/ord
 | QRIS restoran | Adapter backend; kandidat Midtrans | Memisahkan kontrak provider dari domain pesanan | Seluruh kelayakan/aktivasi/biaya/settlement belum final |
 | Tagihan SaaS | Adapter pembayaran invoice; provider TBD | Aktivasi otomatis setelah pembayaran tanpa autodebit | Periode/nominal versi harga, expiry dan event idempotensi |
 | Hosting | Static web HTTPS + runtime API/worker terkelola + PostgreSQL terkelola | Penempatan tanggung jawab, bukan komitmen vendor | Lokasi data, anggaran, scale, monitoring dan disaster recovery |
-| Gambar produk/objek | Object storage privat bila diperlukan; provider TBD | Bukan penyimpanan receipt pelanggan atau AI MVP otomatis | Akses, format/ukuran, retensi dan kebutuhan menu final |
+| Gambar produk/objek | Object storage privat bila diperlukan; provider TBD | Menyimpan satu foto produk opsional untuk katalog, kasir dan QR meja; bukan receipt pelanggan atau AI MVP otomatis | Akses, format/kompresi, ukuran, retensi, kebutuhan offline dan biaya — TBD-24 |
 | Desain | Sistem komponen responsif; library/style TBD | Mendahulukan fungsi dan keterbacaan | Jangan menganggap Emerald atau shadcn/ui sudah disetujui |
 
 Vite mendokumentasikan keluaran build yang dapat ditempatkan pada static hosting; server preview lokalnya bukan server produksi. Ini mendukung pilihan kandidat pemisahan web/API di atas. [Dokumentasi deployment Vite](https://vite.dev/guide/static-deploy).

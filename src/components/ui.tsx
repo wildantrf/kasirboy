@@ -263,6 +263,14 @@ export function Modal({
   const panelRef = useRef<HTMLDivElement | null>(null);
   const titleId = useId();
 
+  // Pemanggil biasanya mengirim arrow function baru tiap render. Simpan versi
+  // terbaru di ref agar efek di bawah hanya berjalan saat modal dibuka, bukan
+  // setiap ketikan (sebelumnya fokus lompat ke tombol tutup).
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (!open) {
       return;
@@ -271,7 +279,7 @@ export function Modal({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.stopPropagation();
-        onClose();
+        onCloseRef.current();
       }
     };
 
@@ -279,16 +287,21 @@ export function Modal({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    const focusable = panelRef.current?.querySelector<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    // Prioritaskan isian form agar pengguna bisa langsung mengetik. Lewati
+    // input berkas tersembunyi (mis. unggah foto) agar fokus terlihat.
+    const formField = panelRef.current?.querySelector<HTMLElement>(
+      'input:not([type="hidden"]):not([type="file"]), select, textarea',
     );
-    focusable?.focus();
+    const fallback = panelRef.current?.querySelector<HTMLElement>(
+      'button, [href], [tabindex]:not([tabindex="-1"])',
+    );
+    (formField ?? fallback)?.focus();
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) {
     return null;

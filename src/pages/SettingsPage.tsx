@@ -38,6 +38,7 @@ const AUDIT_LABEL: Record<AuditAction, string> = {
   'offline.device_registered': 'Perangkat',
   'offline.order_synced': 'Offline',
   'menu.updated': 'Menu',
+  'menu.deleted': 'Menu',
   'branch.updated': 'Cabang',
 };
 

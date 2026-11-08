@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppActions, useAppState } from '../state/AppProvider';
 import { useToast } from '../components/toast';
@@ -9,6 +9,7 @@ import {
   CardHead,
   EmptyState,
   Field,
+  IconButton,
   Modal,
   Note,
   Select,
@@ -20,7 +21,8 @@ import { Money } from '../components/domain';
 import { can } from '../lib/permissions';
 import { categoriesOf, productsOf } from '../lib/selectors';
 import { describeError } from '../lib/errors';
-import type { Product } from '../types/domain';
+import { prepareMenuPhoto } from '../lib/photo';
+import type { Category, Product } from '../types/domain';
 
 export function ProductsPage() {
   const state = useAppState();
@@ -40,11 +42,17 @@ export function ProductsPage() {
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState('');
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDeleteProduct, setConfirmDeleteProduct] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [newCategory, setNewCategory] = useState('');
   const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [pendingCategoryDelete, setPendingCategoryDelete] = useState<Category | null>(null);
 
   const canManage = can(session?.role, 'menu.manage');
 
@@ -56,6 +64,14 @@ export function ProductsPage() {
       return inCategory && matchesQuery;
     });
   }, [products, search, categoryFilter]);
+
+  const productsPerCategory = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const product of products) {
+      counts.set(product.categoryId, (counts.get(product.categoryId) ?? 0) + 1);
+    }
+    return counts;
+  }, [products]);
 
   if (!session || !branch) {
     return null;
@@ -84,7 +100,10 @@ export function ProductsPage() {
     setPrice('');
     setDescription('');
     setCategoryId(categories[0]?.id ?? '');
+    setPhoto(null);
+    setPhotoError(null);
     setError(null);
+    setConfirmDeleteProduct(false);
     setProductModalOpen(true);
   }
 
@@ -94,8 +113,28 @@ export function ProductsPage() {
     setPrice(String(product.price));
     setDescription(product.description);
     setCategoryId(product.categoryId);
+    setPhoto(product.photo ?? null);
+    setPhotoError(null);
     setError(null);
+    setConfirmDeleteProduct(false);
     setProductModalOpen(true);
+  }
+
+  async function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) {
+      return;
+    }
+    setPhotoBusy(true);
+    setPhotoError(null);
+    try {
+      setPhoto(await prepareMenuPhoto(file));
+    } catch (caught) {
+      setPhotoError(describeError(caught));
+    } finally {
+      setPhotoBusy(false);
+    }
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -108,6 +147,7 @@ export function ProductsPage() {
           description,
           price: Number(price),
           categoryId,
+          photo,
         });
         pushToast({ tone: 'success', title: 'Produk diperbarui' });
       } else {
@@ -116,6 +156,7 @@ export function ProductsPage() {
           description,
           price: Number(price),
           categoryId,
+          photo,
         });
         pushToast({ tone: 'success', title: 'Produk ditambahkan' });
       }
@@ -150,6 +191,64 @@ export function ProductsPage() {
       setCategoryModalOpen(false);
       pushToast({ tone: 'success', title: 'Kategori ditambahkan' });
     } catch (caught) {
+      setCategoryError(describeError(caught));
+    }
+  }
+
+  function moveCategory(categoryId: string, direction: 'up' | 'down') {
+    setCategoryError(null);
+    try {
+      actions.moveCategory(categoryId, direction);
+    } catch (caught) {
+      setCategoryError(describeError(caught));
+    }
+  }
+
+  function handleDeleteProduct() {
+    if (!editing) {
+      return;
+    }
+    try {
+      actions.deleteProduct(editing.id);
+      pushToast({
+        tone: 'success',
+        title: 'Produk dihapus',
+        message: 'Riwayat transaksi lama tidak berubah.',
+      });
+      setConfirmDeleteProduct(false);
+      setProductModalOpen(false);
+    } catch (caught) {
+      setConfirmDeleteProduct(false);
+      setError(describeError(caught));
+    }
+  }
+
+  function requestDeleteCategory(category: Category) {
+    setCategoryError(null);
+    const count = productsPerCategory.get(category.id) ?? 0;
+    if (count > 0) {
+      setCategoryError(
+        `Kategori "${category.name}" masih memiliki ${count} produk. Pindahkan atau hapus produknya terlebih dahulu.`,
+      );
+      return;
+    }
+    setPendingCategoryDelete(category);
+  }
+
+  function handleDeleteCategory() {
+    if (!pendingCategoryDelete) {
+      return;
+    }
+    try {
+      actions.deleteCategory(pendingCategoryDelete.id);
+      pushToast({
+        tone: 'success',
+        title: 'Kategori dihapus',
+        message: `"${pendingCategoryDelete.name}" dihapus dari katalog.`,
+      });
+      setPendingCategoryDelete(null);
+    } catch (caught) {
+      setPendingCategoryDelete(null);
       setCategoryError(describeError(caught));
     }
   }
@@ -252,8 +351,17 @@ export function ProductsPage() {
                     <tr key={product.id}>
                       <td>
                         <div className="product-cell">
-                          <strong>{product.name}</strong>
-                          <span className="small muted">{product.description || 'Tanpa deskripsi'}</span>
+                          <span className={`product-thumb ${product.photo ? 'has-photo' : ''}`}>
+                            {product.photo ? (
+                              <img src={product.photo} alt={`Foto ${product.name}`} loading="lazy" />
+                            ) : (
+                              <Icon name="image" size={16} />
+                            )}
+                          </span>
+                          <div className="product-cell__text">
+                            <strong>{product.name}</strong>
+                            <span className="small muted">{product.description || 'Tanpa deskripsi'}</span>
+                          </div>
                         </div>
                       </td>
                       <td className="small">{category?.name ?? '—'}</td>
@@ -292,21 +400,117 @@ export function ProductsPage() {
 
       <Modal
         open={productModalOpen}
-        onClose={() => setProductModalOpen(false)}
+        onClose={() => {
+          setProductModalOpen(false);
+          setConfirmDeleteProduct(false);
+        }}
         title={editing ? 'Ubah produk' : 'Tambah produk'}
         description="Nama dan harga disimpan pada katalog cabang ini."
         footer={
-          <>
-            <Button variant="ghost" onClick={() => setProductModalOpen(false)}>
-              Batal
-            </Button>
-            <Button variant="primary" type="submit" form="product-form">
-              {editing ? 'Simpan perubahan' : 'Tambah produk'}
-            </Button>
-          </>
+          confirmDeleteProduct ? (
+            <>
+              <Button variant="ghost" onClick={() => setConfirmDeleteProduct(false)}>
+                Batal
+              </Button>
+              <Button variant="danger" icon="trash" onClick={handleDeleteProduct}>
+                Hapus permanen
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setProductModalOpen(false);
+                  setConfirmDeleteProduct(false);
+                }}
+              >
+                Batal
+              </Button>
+              {editing ? (
+                <Button variant="danger" icon="trash" onClick={() => setConfirmDeleteProduct(true)}>
+                  Hapus
+                </Button>
+              ) : null}
+              <Button variant="primary" type="submit" form="product-form">
+                {editing ? 'Simpan perubahan' : 'Tambah produk'}
+              </Button>
+            </>
+          )
         }
       >
-        <form id="product-form" className="form-grid" onSubmit={handleSubmit}>
+        {confirmDeleteProduct && editing ? (
+          <Note tone="danger" title={`Hapus "${editing.name}"?`}>
+            Produk dihapus dari katalog cabang ini. Riwayat transaksi lama tidak berubah karena order
+            menyimpan nama dan harga saat transaksi terjadi.
+          </Note>
+        ) : null}
+
+        <form
+          id="product-form"
+          className="form-grid"
+          onSubmit={handleSubmit}
+          hidden={confirmDeleteProduct}
+        >
+          <div className="field">
+            <span className="field__label">Foto menu</span>
+            <div className="photo-field">
+              <div className={`photo-field__preview ${photo ? 'is-filled' : ''}`}>
+                {photo ? (
+                  <img src={photo} alt="Pratinjau foto produk" />
+                ) : (
+                  <Icon name="image" size={24} />
+                )}
+              </div>
+              <div className="photo-field__body">
+                <div className="photo-field__actions">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon="image"
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={photoBusy}
+                  >
+                    {photoBusy ? 'Memproses…' : photo ? 'Ganti foto' : 'Unggah foto'}
+                  </Button>
+                  {photo ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon="trash"
+                      type="button"
+                      onClick={() => {
+                        setPhoto(null);
+                        setPhotoError(null);
+                      }}
+                    >
+                      Hapus
+                    </Button>
+                  ) : null}
+                </div>
+                <p className="field__hint">
+                  JPG/PNG/WebP. Otomatis dipotong persegi 640 px dan dikompres agar hemat penyimpanan.
+                  Tampil di kasir dan menu QR.
+                </p>
+                {photoError ? (
+                  <p className="field__error" role="alert">
+                    {photoError}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={handlePhotoChange}
+              tabIndex={-1}
+              aria-hidden="true"
+            />
+          </div>
+
           <Field label="Nama produk">
             {({ id, describedBy }) => (
               <TextInput
@@ -328,7 +532,7 @@ export function ProductsPage() {
                   aria-describedby={describedBy}
                   type="number"
                   min={100}
-                  step={500}
+                  step={100}
                   value={price}
                   onChange={(event) => setPrice(event.target.value)}
                   required
@@ -376,13 +580,12 @@ export function ProductsPage() {
       <Modal
         open={categoryModalOpen}
         onClose={() => setCategoryModalOpen(false)}
-        title="Tambah kategori"
-        description="Kategori hanya mengelompokkan produk; tidak memengaruhi perhitungan."
-        size="sm"
+        title="Kategori menu"
+        description="Urutan kategori dipakai pada chip kasir dan menu QR. Kategori kosong dapat dihapus."
         footer={
           <>
             <Button variant="ghost" onClick={() => setCategoryModalOpen(false)}>
-              Batal
+              Selesai
             </Button>
             <Button variant="primary" type="submit" form="category-form">
               Tambah
@@ -390,25 +593,88 @@ export function ProductsPage() {
           </>
         }
       >
-        <form id="category-form" className="form-grid" onSubmit={handleAddCategory}>
-          <Field label="Nama kategori">
-            {({ id, describedBy }) => (
-              <TextInput
-                id={id}
-                aria-describedby={describedBy}
-                value={newCategory}
-                onChange={(event) => setNewCategory(event.target.value)}
-                placeholder="Contoh: Pastry"
-                required
-              />
-            )}
-          </Field>
-          {categoryError ? (
-            <Note tone="danger" title="Kategori belum dibuat">
-              {categoryError}
-            </Note>
-          ) : null}
-        </form>
+        <div className="stack stack--tight">
+          {categories.length === 0 ? (
+            <p className="small muted">Belum ada kategori. Tambahkan kategori pertama di bawah.</p>
+          ) : (
+            <ul className="category-order-list" aria-label="Urutan kategori">
+              {categories.map((category, index) => (
+                <li key={category.id} className="category-order-row">
+                  <span className="category-order-row__index" aria-hidden="true">
+                    {index + 1}
+                  </span>
+                  <span className="category-order-row__name">{category.name}</span>
+                  <span className="category-order-row__count">
+                    {productsPerCategory.get(category.id) ?? 0} produk
+                  </span>
+                  <div className="category-order-row__actions">
+                    <IconButton
+                      icon="chevron-up"
+                      label={`Naikkan ${category.name}`}
+                      disabled={index === 0}
+                      onClick={() => moveCategory(category.id, 'up')}
+                    />
+                    <IconButton
+                      icon="chevron-down"
+                      label={`Turunkan ${category.name}`}
+                      disabled={index === categories.length - 1}
+                      onClick={() => moveCategory(category.id, 'down')}
+                    />
+                    <IconButton
+                      icon="trash"
+                      label={`Hapus ${category.name}`}
+                      tone="danger"
+                      onClick={() => requestDeleteCategory(category)}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <form id="category-form" className="form-grid" onSubmit={handleAddCategory}>
+            <Field label="Nama kategori">
+              {({ id, describedBy }) => (
+                <TextInput
+                  id={id}
+                  aria-describedby={describedBy}
+                  value={newCategory}
+                  onChange={(event) => setNewCategory(event.target.value)}
+                  placeholder="Contoh: Pastry"
+                  required
+                />
+              )}
+            </Field>
+            {categoryError ? (
+              <Note tone="danger" title="Tindakan belum berhasil">
+                {categoryError}
+              </Note>
+            ) : null}
+          </form>
+        </div>
+      </Modal>
+
+      <Modal
+        open={Boolean(pendingCategoryDelete)}
+        onClose={() => setPendingCategoryDelete(null)}
+        title="Hapus kategori?"
+        description="Hanya kategori kosong yang dapat dihapus."
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setPendingCategoryDelete(null)}>
+              Batal
+            </Button>
+            <Button variant="danger" icon="trash" onClick={handleDeleteCategory}>
+              Hapus kategori
+            </Button>
+          </>
+        }
+      >
+        <p className="small">
+          Kategori <strong>{pendingCategoryDelete?.name}</strong> akan dihapus dari katalog cabang ini.
+          Produk dan transaksi lama tidak terpengaruh.
+        </p>
       </Modal>
     </div>
   );

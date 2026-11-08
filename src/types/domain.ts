@@ -120,6 +120,12 @@ export interface Product {
   description: string;
   price: number;
   availability: ProductAvailability;
+  /**
+   * Foto menu sebagai data URL JPEG terkompresi (persegi, maks 640 px).
+   * Opsional; `null` berarti belum ada foto. Snapshot transaksi lama tidak
+   * menyimpan foto sehingga riwayat tidak berubah saat foto diganti.
+   */
+  photo?: string | null;
   updatedAt: string;
 }
 
@@ -295,6 +301,7 @@ export type AuditAction =
   | 'offline.device_registered'
   | 'offline.order_synced'
   | 'menu.updated'
+  | 'menu.deleted'
   | 'branch.updated';
 
 export interface AuditEvent {
